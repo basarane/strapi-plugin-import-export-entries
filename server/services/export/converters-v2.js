@@ -23,6 +23,9 @@ const beforeConvert = (jsoContent, options) => {
 
 const preprocess = (jsoContent) => {
   let media = jsoContent.data[CustomSlugToSlug[CustomSlugs.MEDIA]];
+  console.log("preprocess", jsoContent, media)
+
+  return jsoContent;
 
   if (!media) {
     return jsoContent;
@@ -53,6 +56,8 @@ const buildAbsoluteUrl = (relativeUrl) => {
 const postprocess = (jsoContent) => {
   let mediaSlug = CustomSlugToSlug[CustomSlugs.MEDIA];
   let media = jsoContent.data[mediaSlug];
+  
+  return jsoContent;
 
   if (!media) {
     return jsoContent;

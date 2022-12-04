@@ -200,6 +200,7 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
     let entry = await strapi.db.query(slug).findOne({ where });
 
     if (!entry) {
+      console.log(slug, datum);
       await strapi.entityService.create(slug, { data: datum });
     } else {
       await updateEntry(slug, entry.id, datum, { importStage });
