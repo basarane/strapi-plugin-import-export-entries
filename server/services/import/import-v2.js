@@ -36,9 +36,10 @@ const importDataV2 = async (fileContent, { slug, user, idField }) => {
   // Import without setting relations.
   for (const slugFromFile of slugs) {
     let slugFailures = [];
-    if (slugFromFile === CustomSlugToSlug[CustomSlugs.MEDIA]) {
-      slugFailures = await importMedia(Object.values(data[slugFromFile]), { user }).then((res) => res.slugFailures);
-    } else {
+    // if (slugFromFile === CustomSlugToSlug[CustomSlugs.MEDIA]) {
+    //   slugFailures = await importMedia(Object.values(data[slugFromFile]), { user }).then((res) => res.slugFailures);
+    // } else 
+    {
       slugFailures = await importOtherSlug(Object.values(data[slugFromFile]), {
         slug: slugFromFile,
         user,
@@ -53,9 +54,10 @@ const importDataV2 = async (fileContent, { slug, user, idField }) => {
   // Set relations relations.
   for (const slugFromFile of slugs) {
     let slugFailures = [];
-    if (slugFromFile === CustomSlugToSlug[CustomSlugs.MEDIA]) {
-      slugFailures = await importMedia(Object.values(data[slugFromFile]), { user }).then((res) => res.slugFailures);
-    } else {
+    // if (slugFromFile === CustomSlugToSlug[CustomSlugs.MEDIA]) {
+    //   slugFailures = await importMedia(Object.values(data[slugFromFile]), { user }).then((res) => res.slugFailures);
+    // } else 
+    {
       slugFailures = await importOtherSlug(Object.values(data[slugFromFile]), {
         slug: slugFromFile,
         user,

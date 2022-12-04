@@ -43,9 +43,11 @@ const exportDataV2 = async ({ slug, search, applySearch, deepness = 5 }) => {
   } else {
     const slugs = slug.split(",");
     for (const slug of slugs) {
+      console.log("preparing data", slug);
       const hierarchy = buildSlugHierarchy(slug, deepness);
       const slugEntries = await findEntriesForHierarchy(slug, hierarchy, deepness, { ...(applySearch ? { search } : {}) });
       entries = mergeObjects(entries, slugEntries);
+      console.log(slugEntries)
     }
   }
 
