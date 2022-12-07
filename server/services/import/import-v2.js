@@ -171,6 +171,7 @@ const updateOrCreate = async (user, slug, datum, idField = 'id', { importStage }
   }
 
   const model = getModel(slug);
+
   if (model.kind === 'singleType') {
     await updateOrCreateSingleType(user, slug, datum, { importStage });
   } else {
@@ -200,7 +201,6 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
     let entry = await strapi.db.query(slug).findOne({ where });
 
     if (!entry) {
-      console.log(slug, datum);
       await strapi.entityService.create(slug, { data: datum });
     } else {
       await updateEntry(slug, entry.id, datum, { importStage });
@@ -321,7 +321,10 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
   if (importStage === 'simpleAttributes') {
     await strapi.entityService.update(slug, id, { data: datum });
   } else if (importStage === 'relationAttributes') {
+    // if (slug !== "plugin::upload.file") {
+    console.log("updateEntry", slug, id, datum);
     await strapi.db.query(slug).update({ where: { id }, data: datum });
+    // }
   }
 };
 

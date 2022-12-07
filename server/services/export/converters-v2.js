@@ -4,6 +4,9 @@ const toPairs = require('lodash/toPairs');
 const { CustomSlugToSlug, CustomSlugs } = require('../../config/constants');
 const { getConfig } = require('../../utils/getConfig');
 
+const CUSTOM_MEDIA = false;
+
+
 const convertToJson = (jsoContent) => {
   return JSON.stringify(jsoContent, null, '\t');
 };
@@ -23,11 +26,7 @@ const beforeConvert = (jsoContent, options) => {
 
 const preprocess = (jsoContent) => {
   let media = jsoContent.data[CustomSlugToSlug[CustomSlugs.MEDIA]];
-  console.log("preprocess", jsoContent, media)
-
-  return jsoContent;
-
-  if (!media) {
+  if (!media || !CUSTOM_MEDIA) {
     return jsoContent;
   }
 
@@ -56,10 +55,14 @@ const buildAbsoluteUrl = (relativeUrl) => {
 const postprocess = (jsoContent) => {
   let mediaSlug = CustomSlugToSlug[CustomSlugs.MEDIA];
   let media = jsoContent.data[mediaSlug];
-  
-  return jsoContent;
-
-  if (!media) {
+  if (!media || !CUSTOM_MEDIA) {
+    if (media) {
+      jsoContent.data[mediaSlug] = fromPairs(
+        toPairs(media).map(([id, { related, ...medium }]) => {
+          return [id, medium];
+        }),
+      );
+    }
     return jsoContent;
   }
 
