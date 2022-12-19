@@ -190,7 +190,7 @@ const updateOrCreate = async (user, slug, datum, idField = 'id', { importStage }
  */
 const updateOrCreateCollectionType = async (user, slug, datum, { idField, importStage }) => {
   const { isLocalized } = getModelConfig(slug);
-
+  // console.log("updateOrCreateCollectionType", slug, datum, isLocalized);
   const whereBuilder = new ObjectBuilder();
   if (datum[idField]) {
     whereBuilder.extend({ [idField]: datum[idField] });
@@ -202,6 +202,7 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
 
     if (!entry) {
       await strapi.entityService.create(slug, { data: datum });
+      await updateEntry(slug, datum.id, datum, { importStage }); // @ersin
     } else {
       await updateEntry(slug, entry.id, datum, { importStage });
     }
@@ -273,6 +274,7 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
 
 const updateOrCreateSingleType = async (user, slug, datum, { importStage }) => {
   const { isLocalized } = getModelConfig(slug);
+  // console.log("updateOrCreateSingleType", slug, datum, isLocalized);
 
   if (!isLocalized) {
     let entry = await strapi.db.query(slug).findMany();
@@ -319,13 +321,15 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
   datum = omit(datum, ['id']);
 
   if (importStage === 'simpleAttributes') {
+    console.log("updateEntrySimple");
     await strapi.entityService.update(slug, id, { data: datum });
   } else if (importStage === 'relationAttributes') {
     // if (slug !== "plugin::upload.file") {
-    console.log("updateEntry", slug, id, datum);
+    console.log("updateEntryRelation");
     await strapi.db.query(slug).update({ where: { id }, data: datum });
     // }
   }
+  console.log("updateEntry", importStage, slug, id, datum);
 };
 
 module.exports = {
