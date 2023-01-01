@@ -10,6 +10,8 @@ const { CustomSlugToSlug, CustomSlugs } = require('../../config/constants');
 const { getModelAttributes, getAllSlugs } = require('../../utils/models');
 const { convertToJson } = require('./converters-v2');
 
+const omit = require('lodash/omit');
+
 const dataFormats = {
   JSON: 'json',
 };
@@ -259,7 +261,7 @@ const findEntries = async (slug, deepness, { search, ids }) => {
 
     const entries = await strapi.entityService.findMany(slug, queryBuilder.get());
 
-    return entries;
+    return entries.map((entry) => omit(entry, ['updatedAt', 'createdAt'])); // @ersin - omit updatedAt and createdAt
   } catch (_) {
     return [];
   }
@@ -361,7 +363,6 @@ const buildSlugHierarchy = (slug, deepness = 5) => {
     if (!attribute) {
       continue;
     }
-
     if (attribute.type === 'component') {
       hierarchy[attributeName] = buildSlugHierarchy(attribute.component, deepness - 1);
     } else if (attribute.type === 'dynamiczone') {
@@ -382,9 +383,12 @@ const buildSlugHierarchy = (slug, deepness = 5) => {
 const getModelPopulationAttributes = (model) => {
   if (model.uid === 'plugin::upload.file') {
     const { related, ...attributes } = model.attributes;
+    // return omit(attributes, ['updatedAt']);
+    // console.log(attributes, "vs", omit(attributes, ['updatedAt']));
     return attributes;
   }
-
+  // return omit(model.attributes, ['updatedAt']);
+  // console.log(model.attributes, "vs", omit(model.attributes, ['updatedAt']));
   return model.attributes;
 };
 
