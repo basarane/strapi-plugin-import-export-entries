@@ -9,5 +9,13 @@ module.exports = {
         policies: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/export/saveEntityJson',
+      handler: 'exportAdmin.saveEntityJson',
+      config: {
+        policies: [],
+      },
+    },
   ],
 };

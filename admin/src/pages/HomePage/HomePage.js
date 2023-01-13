@@ -7,6 +7,7 @@ import { Option, Select } from '@strapi/design-system/Select';
 import { Typography } from '@strapi/design-system/Typography';
 import range from 'lodash/range';
 import React, { memo, useState } from 'react';
+import Write from '@strapi/icons/Write';
 
 import { Header } from '../../components/Header';
 import { InjectedExportButton } from '../../components/InjectedExportButton';
@@ -14,8 +15,16 @@ import { InjectedImportButton } from '../../components/InjectedImportButton';
 import { useI18n } from '../../hooks/useI18n';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { dataFormats } from '../../utils/dataFormats';
+import { Button } from '@strapi/design-system/Button';
+import { handleRequestErr } from '../../utils/error';
+
+import ExportProxy from '../../api/exportProxy';
+import { useAlerts } from '../../hooks/useAlerts';
+import { CustomSlugs } from '../../../../server/config/constants';
 
 const HomePage = () => {
+  const { notify } = useAlerts();
+
   const { i18n } = useI18n();
   const { getPreferences, updatePreferences } = useLocalStorage();
 
@@ -26,12 +35,44 @@ const HomePage = () => {
     setPreferences(getPreferences());
   };
 
+  const saveEntityJson = async () => {
+    console.log("HERE");
+    try {
+      const res = await ExportProxy.saveEntityJson({
+        slug: CustomSlugs.WHOLE_DB,
+      });
+      console.log("DONE", res);
+    } catch (err) {
+      console.log("err  ", err);
+      handleRequestErr(err, {
+        403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
+        default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
+      });
+    } finally {
+    }
+  };
+
   return (
     <>
       <Header />
 
       <ContentLayout>
         <Flex direction="column" alignItems="start" gap={8}>
+          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding="32px" hasRadius={true}>
+            <Flex direction="column" alignItems="start" gap={6}>
+              <Typography variant="alpha">KOMPUTER/SOTKA CUSTOM</Typography>
+
+              <Box>
+                <Flex direction="column" alignItems="start" gap={4}>
+                  <Flex gap={4}>
+                    <Button startIcon={<Write />} size="L" onClick={saveEntityJson} fullWidth={false} variant="success">
+                      SAVE ENTITY.JSON
+                    </Button>
+                  </Flex>
+                </Flex>
+              </Box>
+            </Flex>
+          </Box>
           <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding="32px" hasRadius={true}>
             <Flex direction="column" alignItems="start" gap={6}>
               <Typography variant="alpha">{i18n('plugin.page.homepage.section.quick-actions.title', 'Quick Actions')}</Typography>

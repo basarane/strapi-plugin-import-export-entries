@@ -10,6 +10,16 @@ const getByContentType = async ({ slug, search, applySearch, exportFormat, relat
   return data;
 };
 
+const saveEntityJson = async ({ slug }) => {
+  const data = await request(`/${pluginId}/export/saveEntityJson`, {
+    method: 'POST',
+    body: { slug },
+  });
+  return data;
+};
+
+
 export default {
   getByContentType,
+  saveEntityJson,
 };

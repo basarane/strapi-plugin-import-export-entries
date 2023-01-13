@@ -38,6 +38,19 @@ const hasPermissions = (ctx) => {
   return !!allowedSlugs.length;
 };
 
+
+const saveEntityJson = async (ctx) => {
+  if (!hasPermissions(ctx)) {
+    return ctx.forbidden();
+  }  
+  console.log("export-controller.js: saveEntityJson");
+  let data = await getService('export').saveEntityJson({});
+  ctx.body = {
+    data,
+  };
+};
+
 module.exports = ({ strapi }) => ({
   exportData: handleAsyncError(exportData),
+  saveEntityJson: handleAsyncError(saveEntityJson),
 });
