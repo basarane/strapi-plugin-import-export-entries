@@ -34,16 +34,20 @@ const HomePage = () => {
     updatePreferences({ [key]: value });
     setPreferences(getPreferences());
   };
+  const [saveStatus, setSaveStatus] = useState(0);
 
   const saveEntityJson = async () => {
     console.log("HERE");
+    setSaveStatus(1);
     try {
       const res = await ExportProxy.saveEntityJson({
         slug: CustomSlugs.WHOLE_DB,
       });
       console.log("DONE", res);
+      setSaveStatus(2);
     } catch (err) {
       console.log("err  ", err);
+      setSaveStatus(3);
       handleRequestErr(err, {
         403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
         default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
@@ -65,10 +69,19 @@ const HomePage = () => {
               <Box>
                 <Flex direction="column" alignItems="start" gap={4}>
                   <Flex gap={4}>
-                    <Button startIcon={<Write />} size="L" onClick={saveEntityJson} fullWidth={false} variant="success">
+                    <Button startIcon={<Write />} size="L" disabled={saveStatus===1} onClick={saveEntityJson} fullWidth={false} variant="success">
                       SAVE ENTITY.JSON
                     </Button>
                   </Flex>
+                  {saveStatus > 0 &&
+                    <Flex gap={4}>
+                      <Typography>
+                        {saveStatus == 1 && "Saving..."}
+                        {saveStatus == 2 && "DONE!"}
+                        {saveStatus == 3 && "ERROR"}
+                      </Typography>
+                    </Flex>
+                  }
                 </Flex>
               </Box>
             </Flex>
