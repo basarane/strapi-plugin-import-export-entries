@@ -26,8 +26,8 @@ const commitEntityJson = async ({ }) => {
         res4 = child_process.execSync(`git merge ${currentBranch}`, { stdio: 'inherit' });
         res5 = child_process.execSync(`git push origin ${toBranch}`, { stdio: 'inherit' });
         res7 = child_process.execSync(`git checkout ${currentBranch}`, { stdio: 'inherit' });
-        res6 = child_process.execSync(`git push origin ${currentBranch}`, { stdio: 'inherit' });
     }
+    res6 = child_process.execSync(`git push origin ${currentBranch}`, { stdio: 'inherit' });
     return {
         success: true,
         res: " Add Res: " + res1 +
