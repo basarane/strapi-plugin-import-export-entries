@@ -36,7 +36,7 @@ const commitEntityJson = async ({ }) => {
             " Merge to current:" + res4 +
             " push to Res:" + res5 +
             " checkout current Res:" + res6 +
-            " push current Res:" + res7;
+            " push current Res:" + res7
     };
 }
 
