@@ -18,8 +18,17 @@ const saveEntityJson = async ({ slug }) => {
   return data;
 };
 
+const commitEntityJson = async ({ slug }) => {
+  const data = await request(`/${pluginId}/export/commitEntityJson`, {
+    method: 'POST',
+    body: { slug },
+  });
+  return data;
+};
+
 
 export default {
   getByContentType,
   saveEntityJson,
+  commitEntityJson,
 };

@@ -50,7 +50,19 @@ const saveEntityJson = async (ctx) => {
   };
 };
 
+const commitEntityJson = async (ctx) => {
+  if (!hasPermissions(ctx)) {
+    return ctx.forbidden();
+  }  
+  console.log("export-controller.js: commitEntityJson");
+  let data = await getService('export').commitEntityJson({});
+  ctx.body = {
+    data,
+  };
+};
+
 module.exports = ({ strapi }) => ({
   exportData: handleAsyncError(exportData),
   saveEntityJson: handleAsyncError(saveEntityJson),
+  commitEntityJson: handleAsyncError(commitEntityJson),
 });

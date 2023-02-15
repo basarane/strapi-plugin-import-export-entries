@@ -1,6 +1,6 @@
 const { formats, exportData, getPopulateFromSchema } = require('./export');
 const { exportDataV2 } = require('./export-v2');
-const { saveEntityJson } = require('./save-entity-json');
+const { saveEntityJson, commitEntityJson } = require('./save-entity-json');
 
 module.exports = {
   formats,
@@ -8,4 +8,5 @@ module.exports = {
   getPopulateFromSchema,
   exportDataV2,
   saveEntityJson,
+  commitEntityJson,
 };

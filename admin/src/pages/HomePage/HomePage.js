@@ -35,6 +35,7 @@ const HomePage = () => {
     setPreferences(getPreferences());
   };
   const [saveStatus, setSaveStatus] = useState(0);
+  const [commitStatus, setCommitStatus] = useState(0);
 
   const saveEntityJson = async () => {
     console.log("HERE");
@@ -48,6 +49,26 @@ const HomePage = () => {
     } catch (err) {
       console.log("err  ", err);
       setSaveStatus(3);
+      handleRequestErr(err, {
+        403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
+        default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
+      });
+    } finally {
+    }
+  };
+
+  const commitEntityJson = async () => {
+    console.log("HERE");
+    setCommitStatus(1);
+    try {
+      const res = await ExportProxy.commitEntityJson({
+        slug: CustomSlugs.WHOLE_DB,
+      });
+      console.log("DONE", res);
+      setCommitStatus(2);
+    } catch (err) {
+      console.log("err  ", err);
+      setCommitStatus(3);
       handleRequestErr(err, {
         403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
         default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
@@ -72,13 +93,27 @@ const HomePage = () => {
                     <Button startIcon={<Write />} size="L" disabled={saveStatus===1} onClick={saveEntityJson} fullWidth={false} variant="success">
                       SAVE ENTITY.JSON
                     </Button>
+                    <Button startIcon={<Write />} size="L" disabled={commitStatus===1} onClick={commitEntityJson} fullWidth={false} variant="success">
+                      COMMIT
+                    </Button>
                   </Flex>
                   {saveStatus > 0 &&
                     <Flex gap={4}>
                       <Typography>
+                        Entity Save Status:&nbsp; 
                         {saveStatus == 1 && "Saving..."}
                         {saveStatus == 2 && "DONE!"}
                         {saveStatus == 3 && "ERROR"}
+                      </Typography>
+                    </Flex>
+                  }
+                  {commitStatus > 0 &&
+                    <Flex gap={4}>
+                      <Typography>
+                        Commit Status:&nbsp;
+                        {commitStatus == 1 && "Saving..."}
+                        {commitStatus == 2 && "DONE!"}
+                        {commitStatus == 3 && "ERROR"}
                       </Typography>
                     </Flex>
                   }

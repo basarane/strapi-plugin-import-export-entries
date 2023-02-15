@@ -17,5 +17,13 @@ module.exports = {
         policies: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/export/commitEntityJson',
+      handler: 'exportAdmin.commitEntityJson',
+      config: {
+        policies: [],
+      },
+    },
   ],
 };
