@@ -93,9 +93,9 @@ const HomePage = () => {
                     <Button startIcon={<Write />} size="L" disabled={saveStatus===1} onClick={saveEntityJson} fullWidth={false} variant="success">
                       SAVE ENTITY.JSON
                     </Button>
-                    <Button startIcon={<Write />} size="L" disabled={commitStatus===1} onClick={commitEntityJson} fullWidth={false} variant="success">
+                    {/* <Button startIcon={<Write />} size="L" disabled={commitStatus===1} onClick={commitEntityJson} fullWidth={false} variant="success">
                       COMMIT
-                    </Button>
+                    </Button> */}
                   </Flex>
                   {saveStatus > 0 &&
                     <Flex gap={4}>
