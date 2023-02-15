@@ -17,7 +17,7 @@ const commitEntityJson = async ({ }) => {
     // const res = {someres: true};
     // const res = child_process.execSync(`node strapi-scripts/export-data.js`, { stdio: 'inherit' });
     const res1 = child_process.execSync(`git add Entity/*`, { stdio: 'inherit' });
-    const res2 = child_process.execSync(`git commit -m 'Commit from strapi'`, { stdio: 'inherit' });
+    const res2 = child_process.execSync(`git commit -m "Commit from strapi"`, { stdio: 'inherit' });
     return { success: true, res: "Add Res: " + res1 + " Commit Res:" + res2 };
 }
 
