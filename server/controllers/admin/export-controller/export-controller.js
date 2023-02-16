@@ -38,6 +38,17 @@ const hasPermissions = (ctx) => {
   return !!allowedSlugs.length;
 };
 
+const hasPermissions2 = (ctx) => {
+  const { userAbility } = ctx.state;
+  const slugs = getAllSlugs();
+  const allowedSlugs = slugs.filter((slug) => {
+    const permissionChecker = strapi.plugin('content-manager').service('permission-checker').create({ userAbility, model: slug });
+    return permissionChecker.can.read();
+  });
+
+  return !!allowedSlugs.length;
+};
+
 
 const saveEntityJson = async (ctx) => {
   if (!hasPermissions(ctx)) {
@@ -51,7 +62,8 @@ const saveEntityJson = async (ctx) => {
 };
 
 const commitEntityJson = async (ctx) => {
-  if (!hasPermissions(ctx)) {
+  console.log("export-controller.js: commitEntityJson: ctx.request.body=" + JSON.stringify(ctx.request.body));
+  if (!hasPermissions2(ctx)) {
     return ctx.forbidden();
   }  
   let { branch } = ctx.request.body;
@@ -63,6 +75,7 @@ const commitEntityJson = async (ctx) => {
 };
 
 const loadEntityJsonParams = async (ctx) => {
+  console.log("export-controller.js: loadEntityJsonParams: ctx.request.body=" + JSON.stringify(ctx.request.body));
   if (!hasPermissions(ctx)) {
     return ctx.forbidden();
   }  
