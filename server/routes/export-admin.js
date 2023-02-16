@@ -25,5 +25,13 @@ module.exports = {
         policies: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/export/loadEntityJsonParams',
+      handler: 'exportAdmin.loadEntityJsonParams',
+      config: {
+        policies: [],
+      },
+    },
   ],
 };

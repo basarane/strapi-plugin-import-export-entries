@@ -6,7 +6,7 @@ import { Link } from '@strapi/design-system/Link';
 import { Option, Select } from '@strapi/design-system/Select';
 import { Typography } from '@strapi/design-system/Typography';
 import range from 'lodash/range';
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import Write from '@strapi/icons/Write';
 
 import { Header } from '../../components/Header';
@@ -21,6 +21,9 @@ import { handleRequestErr } from '../../utils/error';
 import ExportProxy from '../../api/exportProxy';
 import { useAlerts } from '../../hooks/useAlerts';
 import { CustomSlugs } from '../../../../server/config/constants';
+import { useDownloadFile } from '../../hooks/useDownloadFile';
+
+const padding=[8, 0, 0];
 
 const HomePage = () => {
   const { notify } = useAlerts();
@@ -36,6 +39,8 @@ const HomePage = () => {
   };
   const [saveStatus, setSaveStatus] = useState(0);
   const [commitStatus, setCommitStatus] = useState(0);
+  const [branch, setBranch] = useState("");
+  const [config, setConfig] = useState(null);
 
   const saveEntityJson = async () => {
     console.log("HERE");
@@ -62,7 +67,7 @@ const HomePage = () => {
     setCommitStatus(1);
     try {
       const res = await ExportProxy.commitEntityJson({
-        slug: CustomSlugs.WHOLE_DB,
+        branch: branch,
       });
       console.log("DONE", res);
       setCommitStatus(2);
@@ -77,30 +82,75 @@ const HomePage = () => {
     }
   };
 
+
+  const loadEntityJsonParams = async () => {
+    try {
+      const res = await ExportProxy.loadEntityJsonParams({ slug: CustomSlugs.WHOLE_DB });
+      console.log("DONE", res);
+      setConfig(res.data.res.config);
+      setBranch(res.data.res.config.currentBranch);
+    } catch (err) {
+      console.log("err  ", err);
+      handleRequestErr(err, {
+        403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
+        default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
+      });
+    } finally {
+    }
+  };
+
+  useEffect(() => {
+    // let timeout = setTimeout(() => {
+    loadEntityJsonParams();
+    // }, 3000);
+    // return () => clearTimeout(timeout);
+  }, []);
+
   return (
     <>
       <Header />
 
       <ContentLayout>
         <Flex direction="column" alignItems="start" gap={8}>
-          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding="32px" hasRadius={true}>
+          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding={padding} hasRadius={true}>
             <Flex direction="column" alignItems="start" gap={6}>
               <Typography variant="alpha">KOMPUTER/SOTKA CUSTOM</Typography>
 
               <Box>
                 <Flex direction="column" alignItems="start" gap={4}>
                   <Flex gap={4}>
-                    <Button startIcon={<Write />} size="L" disabled={saveStatus===1} onClick={saveEntityJson} fullWidth={false} variant="success">
+                    <Typography variant="beta">
+                      Current branch: {config && config.currentBranch}
+                    </Typography>
+                  </Flex>
+                  <Flex gap={4} alignItems="end">
+                    <Button startIcon={<Write />} size="L" disabled={saveStatus === 1} onClick={saveEntityJson} fullWidth={false} variant="success">
                       SAVE ENTITY.JSON
                     </Button>
-                    <Button startIcon={<Write />} size="L" disabled={commitStatus===1} onClick={commitEntityJson} fullWidth={false} variant="success">
-                      COMMIT
-                    </Button>
+                    {config &&
+                      <>
+                        <Select
+                          label='Branch'
+                          placeholder='Branch'
+                          value={branch}
+                          onChange={(value) => setBranch(value)}
+                        >
+                          {config.branches.map((branch) => (
+                            <Option key={branch} value={branch}>
+                              {branch}
+                            </Option>
+                          ))}
+                        </Select>
+                        <Button startIcon={<Write />} size="L" disabled={commitStatus === 1} onClick={commitEntityJson} fullWidth={false} variant="success">
+                          COMMIT & PUSH
+                        </Button>
+                      </>
+                    }
                   </Flex>
                   {saveStatus > 0 &&
                     <Flex gap={4}>
                       <Typography>
-                        Entity Save Status:&nbsp; 
+                        Entity Save Status:&nbsp;
                         {saveStatus == 1 && "Saving..."}
                         {saveStatus == 2 && "DONE!"}
                         {saveStatus == 3 && "ERROR"}
@@ -121,7 +171,7 @@ const HomePage = () => {
               </Box>
             </Flex>
           </Box>
-          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding="32px" hasRadius={true}>
+          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding={padding} hasRadius={true}>
             <Flex direction="column" alignItems="start" gap={6}>
               <Typography variant="alpha">{i18n('plugin.page.homepage.section.quick-actions.title', 'Quick Actions')}</Typography>
 
@@ -136,7 +186,7 @@ const HomePage = () => {
             </Flex>
           </Box>
 
-          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding="32px" hasRadius={true}>
+          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding={padding} hasRadius={true}>
             <Flex direction="column" alignItems="start" gap={6}>
               <Typography variant="alpha">{i18n('plugin.page.homepage.section.preferences.title', 'Preferences')}</Typography>
 
@@ -166,7 +216,7 @@ const HomePage = () => {
             </Flex>
           </Box>
 
-          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding="32px" hasRadius={true}>
+          <Box style={{ alignSelf: 'stretch' }} background="neutral0" padding={padding} hasRadius={true}>
             <Flex direction="column" alignItems="start" gap={6}>
               <Typography variant="alpha">{i18n('plugin.page.homepage.section.need-help.title', 'Need Help?')}</Typography>
 

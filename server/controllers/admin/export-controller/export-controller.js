@@ -54,8 +54,20 @@ const commitEntityJson = async (ctx) => {
   if (!hasPermissions(ctx)) {
     return ctx.forbidden();
   }  
+  let { branch } = ctx.request.body;
   console.log("export-controller.js: commitEntityJson");
-  let data = await getService('export').commitEntityJson({});
+  let data = await getService('export').commitEntityJson({branch});
+  ctx.body = {
+    data,
+  };
+};
+
+const loadEntityJsonParams = async (ctx) => {
+  if (!hasPermissions(ctx)) {
+    return ctx.forbidden();
+  }  
+  console.log("export-controller.js: loadEntityJsonParams");
+  let data = await getService('export').loadEntityJsonParams({});
   ctx.body = {
     data,
   };
@@ -65,4 +77,5 @@ module.exports = ({ strapi }) => ({
   exportData: handleAsyncError(exportData),
   saveEntityJson: handleAsyncError(saveEntityJson),
   commitEntityJson: handleAsyncError(commitEntityJson),
+  loadEntityJsonParams: handleAsyncError(loadEntityJsonParams),
 });
