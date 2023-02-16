@@ -16,6 +16,7 @@ const commitEntityJson = async ({ }) => {
     console.log("Current directory:", process.cwd());
     // const res = {someres: true};
     // const res = child_process.execSync(`node strapi-scripts/export-data.js`, { stdio: 'inherit' });
+    const res0 = child_process.execSync(`git pull origin all`, { stdio: 'inherit' });
     const res1 = child_process.execSync(`git add Entity/*`, { stdio: 'inherit' });
     const res2 = child_process.execSync(`git commit -m "Commit from strapi"`, { stdio: 'inherit' });
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
@@ -30,13 +31,14 @@ const commitEntityJson = async ({ }) => {
     res6 = child_process.execSync(`git push origin ${currentBranch}`, { stdio: 'inherit' });
     return {
         success: true,
-        res: " Add Res: " + res1 +
+        res: " Pull Res: " + res0 +
+            " Add Res: " + res1 +
             " Commit Res:" + res2 +
             " Checkout to Res:" + res3 +
             " Merge to current:" + res4 +
             " push to Res:" + res5 +
-            " checkout current Res:" + res6 +
-            " push current Res:" + res7
+            " push current Res:" + res7 +
+            " checkout current Res:" + res6
     };
 }
 
