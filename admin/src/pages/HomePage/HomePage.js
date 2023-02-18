@@ -23,7 +23,7 @@ import { useAlerts } from '../../hooks/useAlerts';
 import { CustomSlugs } from '../../../../server/config/constants';
 import { useDownloadFile } from '../../hooks/useDownloadFile';
 
-const padding=[8, 0, 0];
+const padding = [8, 0, 0];
 
 const HomePage = () => {
   const { notify } = useAlerts();
@@ -39,6 +39,7 @@ const HomePage = () => {
   };
   const [saveStatus, setSaveStatus] = useState(0);
   const [commitStatus, setCommitStatus] = useState(0);
+  const [loadStatus, setLoadStatus] = useState(0);
   const [branch, setBranch] = useState("");
   const [config, setConfig] = useState(null);
   const [diff, setDiff] = useState("");
@@ -73,6 +74,7 @@ const HomePage = () => {
       });
       console.log("DONE", res);
       setCommitStatus(2);
+      loadEntityJsonParams();
     } catch (err) {
       console.log("err  ", err);
       setCommitStatus(3);
@@ -86,13 +88,16 @@ const HomePage = () => {
 
 
   const loadEntityJsonParams = async () => {
+    setLoadStatus(1);
     try {
       const res = await ExportProxy.loadEntityJsonParams({ slug: CustomSlugs.WHOLE_DB });
       console.log("DONE", res);
+      setLoadStatus(2);
       setConfig(res.data.res.config);
       setBranch(res.data.res.config.currentBranch);
       setDiff(res.data.res.config.currentDiff);
     } catch (err) {
+      setLoadStatus(3);
       console.log("err  ", err);
       handleRequestErr(err, {
         403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
@@ -137,7 +142,7 @@ const HomePage = () => {
                           placeholder='Branch'
                           value={branch}
                           onChange={(value) => setBranch(value)}
-                          disabled={!diff}
+                          disabled={!diff || commitStatus === 1 || loadStatus == 1}
                         >
                           {config.branches.map((branch) => (
                             <Option key={branch} value={branch}>
@@ -145,7 +150,7 @@ const HomePage = () => {
                             </Option>
                           ))}
                         </Select>
-                        <Button startIcon={<Write />} size="L" disabled={!diff} onClick={commitEntityJson} fullWidth={false} variant="success">
+                        <Button startIcon={<Write />} size="L" disabled={!diff || commitStatus === 1 || loadStatus == 1} onClick={commitEntityJson} fullWidth={false} variant="success">
                           COMMIT & PUSH
                         </Button>
                       </>
