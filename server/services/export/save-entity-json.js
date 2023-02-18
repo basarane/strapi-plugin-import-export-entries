@@ -46,9 +46,10 @@ const loadEntityJsonParams = async ({ }) => {
     var child_process = require('child_process');
     console.log("loadEntityJsonParams service called");
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
+    const currentDiff = child_process.execSync('git diff Entity/*').toString().trim();
     const sotkaConfig = require('../../../../../../sotka-config.js');
     console.log("Current directory:", process.cwd());
-    return { success: true, res: { config: {...sotkaConfig, currentBranch: currentBranch} } };
+    return { success: true, res: { config: {...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff} } };
 }
 
 module.exports = {

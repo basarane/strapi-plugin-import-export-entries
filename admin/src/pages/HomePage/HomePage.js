@@ -41,6 +41,7 @@ const HomePage = () => {
   const [commitStatus, setCommitStatus] = useState(0);
   const [branch, setBranch] = useState("");
   const [config, setConfig] = useState(null);
+  const [diff, setDiff] = useState("");
 
   const saveEntityJson = async () => {
     console.log("HERE");
@@ -51,6 +52,7 @@ const HomePage = () => {
       });
       console.log("DONE", res);
       setSaveStatus(2);
+      loadEntityJsonParams();
     } catch (err) {
       console.log("err  ", err);
       setSaveStatus(3);
@@ -89,6 +91,7 @@ const HomePage = () => {
       console.log("DONE", res);
       setConfig(res.data.res.config);
       setBranch(res.data.res.config.currentBranch);
+      setDiff(res.data.res.config.currentDiff);
     } catch (err) {
       console.log("err  ", err);
       handleRequestErr(err, {
@@ -134,6 +137,7 @@ const HomePage = () => {
                           placeholder='Branch'
                           value={branch}
                           onChange={(value) => setBranch(value)}
+                          disabled={!diff}
                         >
                           {config.branches.map((branch) => (
                             <Option key={branch} value={branch}>
@@ -141,7 +145,7 @@ const HomePage = () => {
                             </Option>
                           ))}
                         </Select>
-                        <Button startIcon={<Write />} size="L" disabled={commitStatus === 1} onClick={commitEntityJson} fullWidth={false} variant="success">
+                        <Button startIcon={<Write />} size="L" disabled={!diff} onClick={commitEntityJson} fullWidth={false} variant="success">
                           COMMIT & PUSH
                         </Button>
                       </>
