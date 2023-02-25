@@ -32,21 +32,35 @@ const dataConverterConfigs = {
  * @param {number} options.deepness
  * @returns {string}
  */
-const exportDataV2 = async ({ slug, search, applySearch, deepness = 5 }) => {
+
+const pruneHierarchy = (orig, hierarchy) => {
+  if (!hierarchy)
+    return orig;
+  let fields = Object.keys(orig);
+  for (let i = 0; i < fields.length; i++) {
+    if (fields[i] !== "__slug" && !hierarchy[fields[i]]) {
+      delete orig[fields[i]];
+    }
+  }
+};
+const exportDataV2 = async ({ slug, search, applySearch, deepness = 5, hierarchy = null }) => {
   slug = CustomSlugToSlug[slug] || slug;
 
   let entries = {};
   if (slug === CustomSlugs.WHOLE_DB) {
     for (const slug of getAllSlugs()) {
-      const hierarchy = buildSlugHierarchy(slug, deepness);
-      const slugEntries = await findEntriesForHierarchy(slug, hierarchy, deepness, { ...(applySearch ? { search } : {}) });
+      const hierarchyOrig = buildSlugHierarchy(slug, deepness);
+      pruneHierarchy(hierarchyOrig, hierarchy);
+      const slugEntries = await findEntriesForHierarchy(slug, hierarchyOrig, deepness, { ...(applySearch ? { search } : {}) });
       entries = mergeObjects(entries, slugEntries);
     }
   } else {
     const slugs = slug.split(",");
     for (const slug of slugs) {
-      const hierarchy = buildSlugHierarchy(slug, deepness);
-      const slugEntries = await findEntriesForHierarchy(slug, hierarchy, deepness, { ...(applySearch ? { search } : {}) });
+      const hierarchyOrig = buildSlugHierarchy(slug, deepness);
+      pruneHierarchy(hierarchyOrig, hierarchy);
+      console.log(slug, hierarchyOrig);
+      const slugEntries = await findEntriesForHierarchy(slug, hierarchyOrig, deepness, { ...(applySearch ? { search } : {}) });
       entries = mergeObjects(entries, slugEntries);
     }
   }
