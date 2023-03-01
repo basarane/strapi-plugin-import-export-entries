@@ -23,7 +23,30 @@ import { useAlerts } from '../../hooks/useAlerts';
 import { CustomSlugs } from '../../../../server/config/constants';
 import { useDownloadFile } from '../../hooks/useDownloadFile';
 
+import { RawTable, RawTh, RawTd, RawTr, RawThead, RawTbody } from '@strapi/design-system';
+import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system';
+
 const padding = [8, 0, 0];
+
+function msToTime(s) {
+  // Pad to 2 or 3 digits, default is 2
+  var pad = (n, z = 2) => ('00' + n).slice(-z);
+  //pad(s / 3.6e6 | 0) + ':' +
+  //% 3.6e6
+  return pad((s) / 6e4 | 0) + ':' + pad((s % 6e4) / 1000 | 0); //+ '.' + pad(s % 1000, 3)
+}
+
+function timestampToDate(timeStamp) {
+  var dateFormat = new Date(timeStamp);
+  return dateFormat.toLocaleString();
+}
+function getDuration(timeStamp) {
+  var dateFormat = new Date(timeStamp);
+  var now = new Date();
+  var diff = now - dateFormat;
+  console.log(now, dateFormat, diff);
+  return msToTime(diff);
+}
 
 const HomePage = () => {
   const { notify } = useAlerts();
@@ -43,6 +66,7 @@ const HomePage = () => {
   const [branch, setBranch] = useState("");
   const [config, setConfig] = useState(null);
   const [diff, setDiff] = useState("");
+  const [buildStatus, setBuildStatus] = useState(null);
 
   const saveEntityJson = async () => {
     console.log("HERE");
@@ -86,6 +110,25 @@ const HomePage = () => {
     }
   };
 
+  const genericApi = async (api, params) => {
+    console.log("HERE");
+    try {
+      const res = await ExportProxy.genericApi({
+        action: api,
+        payload: params,
+      });
+      console.log("DONE", res);
+      return res;
+    } catch (err) {
+      console.log("err  ", err);
+      handleRequestErr(err, {
+        403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
+        default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
+      });
+    } finally {
+    }
+    return null;
+  };
 
   const loadEntityJsonParams = async () => {
     setLoadStatus(1);
@@ -106,10 +149,18 @@ const HomePage = () => {
     } finally {
     }
   };
-
+  const getBuildStatus = () => {
+    genericApi("buildStatus", { filter: "all" }).then((res) => {
+      if (res.data.success) {
+        setBuildStatus(res.data.buildStatus);
+        console.log(res.data.buildStatus);
+      }
+    });
+  };
   useEffect(() => {
     // let timeout = setTimeout(() => {
     loadEntityJsonParams();
+    getBuildStatus();
     // }, 3000);
     // return () => clearTimeout(timeout);
   }, []);
@@ -174,6 +225,105 @@ const HomePage = () => {
                         {commitStatus == 2 && "DONE!"}
                         {commitStatus == 3 && "ERROR"}
                       </Typography>
+                    </Flex>
+                  }
+                  <Flex gap={4}>
+                    <Typography variant="beta">
+                      Build Status: {!buildStatus && "Loading..."} {buildStatus && "Loaded"}
+                      <Button size="S" onClick={getBuildStatus} fullWidth={false}>
+                        REFRESH
+                      </Button>
+                    </Typography>
+                  </Flex>
+                  {buildStatus &&
+                    <Flex gap={4}>
+                      <TabGroup label="Some stuff for the label" id="tabs">
+                        {buildStatus.length > 1 &&
+                          <Tabs>
+                            {buildStatus.map((build) => {
+                              return (
+                                <Tab key={build.name}>{build.name}</Tab>
+                              )
+                            })}
+                          </Tabs>
+                        }
+                        <TabPanels>
+                          {buildStatus.map((build) => {
+                            return (
+                              <TabPanel key={build.name}>
+                                <Box color="neutral800" padding={4} background="neutral0">
+                                  <Flex direction="column" alignItems="stretch" gap={4}>
+                                    <Typography variant="beta">{build.name}</Typography>
+
+                                    <RawTable colCount={3} rowCount={3}>
+                                      <RawThead>
+                                        <RawTr aria-rowindex={0}>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>ID</Box>
+                                          </RawTh>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>Date</Box>
+                                          </RawTh>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>Commit</Box>
+                                          </RawTh>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>Duration</Box>
+                                          </RawTh>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>In Progress</Box>
+                                          </RawTh>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>Result</Box>
+                                          </RawTh>
+                                        </RawTr>
+                                      </RawThead>
+                                      <RawTbody>
+                                        {build.builds.map((build, index) => (
+                                          <RawTr key={`row-${index}`} aria-rowindex={index}>
+                                            <RawTd aria-colindex={1}>
+                                              <Box color="neutral800" padding={2}>
+                                                {build.id}
+                                              </Box>
+                                            </RawTd>
+                                            <RawTd aria-colindex={2}>
+                                              <Box color="neutral800" padding={2} style={{ whiteSpace: "nowrap" }}>
+                                                {timestampToDate(build.timestamp)}
+                                              </Box>
+                                            </RawTd>
+                                            <RawTd aria-colindex={2}>
+                                              <Box color="neutral800" padding={2}>
+                                                {build.changeSets.map((changeSet) => (
+                                                  changeSet.items.map((item) => item.msg).join(" / ")
+                                                ))}
+                                              </Box>
+                                            </RawTd>
+                                            <RawTd aria-colindex={2}>
+                                              <Box color="neutral800" padding={2}>
+                                                {msToTime(build.duration)}
+                                              </Box>
+                                            </RawTd>
+                                            <RawTd aria-colindex={2}>
+                                              <Box color="neutral800" padding={2}>
+                                                {build.inProgress ? `${getDuration(build.timestamp)}/${msToTime(build.estimatedDuration)}` : "No"}
+                                              </Box>
+                                            </RawTd>
+                                            <RawTd aria-colindex={2}>
+                                              <Box color="neutral800" padding={2}>
+                                                {build.result}
+                                              </Box>
+                                            </RawTd>
+                                          </RawTr>
+                                        ))}
+                                      </RawTbody>
+                                    </RawTable>
+                                  </Flex>
+                                </Box>
+                              </TabPanel>
+                            )
+                          })}
+                        </TabPanels>
+                      </TabGroup>
                     </Flex>
                   }
                 </Flex>

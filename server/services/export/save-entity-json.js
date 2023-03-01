@@ -49,11 +49,24 @@ const loadEntityJsonParams = async ({ }) => {
     const currentDiff = child_process.execSync('git diff Entity/*').toString().trim();
     const sotkaConfig = require('../../../../../../sotka-config.js');
     console.log("Current directory:", process.cwd());
-    return { success: true, res: { config: {...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff} } };
+    return { success: true, res: { config: { ...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff } } };
+}
+
+const genericApi = async ({action, payload}) => {
+    console.log("genericApi service called", action, payload);
+    switch (action) {
+        case "buildStatus":
+            var child_process = require('child_process');
+            const res = child_process.execSync(`node strapi-scripts/build-status.mjs`).toString().trim();
+            var status = JSON.parse(res);
+            return { success: true, buildStatus: status };
+    }
+    return { success: true };
 }
 
 module.exports = {
     saveEntityJson,
     commitEntityJson,
+    genericApi,
     loadEntityJsonParams,
 };

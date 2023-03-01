@@ -53,7 +53,7 @@ const hasPermissions2 = (ctx) => {
 const saveEntityJson = async (ctx) => {
   if (!hasPermissions(ctx)) {
     return ctx.forbidden();
-  }  
+  }
   console.log("export-controller.js: saveEntityJson");
   let data = await getService('export').saveEntityJson({});
   ctx.body = {
@@ -65,20 +65,31 @@ const commitEntityJson = async (ctx) => {
   console.log("export-controller.js: commitEntityJson: ctx.request.body=" + JSON.stringify(ctx.request.body));
   if (!hasPermissions2(ctx)) {
     return ctx.forbidden();
-  }  
+  }
   let { branch } = ctx.request.body;
   console.log("export-controller.js: commitEntityJson");
-  let data = await getService('export').commitEntityJson({branch});
+  let data = await getService('export').commitEntityJson({ branch });
   ctx.body = {
     data,
   };
 };
 
+const genericApi = async (ctx) => {
+  console.log("export-controller.js: genericApi: ctx.request.body=" + JSON.stringify(ctx.request.body));
+  if (!hasPermissions2(ctx)) {
+    return ctx.forbidden();
+  }
+  console.log("export-controller.js: genericApi");
+  let data = await getService('export').genericApi(ctx.request.body);
+  ctx.body = {
+    data,
+  };
+};
 const loadEntityJsonParams = async (ctx) => {
   console.log("export-controller.js: loadEntityJsonParams: ctx.request.body=" + JSON.stringify(ctx.request.body));
   if (!hasPermissions(ctx)) {
     return ctx.forbidden();
-  }  
+  }
   console.log("export-controller.js: loadEntityJsonParams");
   let data = await getService('export').loadEntityJsonParams({});
   ctx.body = {
@@ -90,5 +101,6 @@ module.exports = ({ strapi }) => ({
   exportData: handleAsyncError(exportData),
   saveEntityJson: handleAsyncError(saveEntityJson),
   commitEntityJson: handleAsyncError(commitEntityJson),
+  genericApi: handleAsyncError(genericApi),
   loadEntityJsonParams: handleAsyncError(loadEntityJsonParams),
 });

@@ -26,8 +26,15 @@ const commitEntityJson = async ({ branch }) => {
   return data;
 };
 
+const genericApi = async (indata) => {
+  const data = await request(`/${pluginId}/export/genericApi`, {
+    method: 'POST',
+    body: indata,
+  });
+  return data;
+};
 
-const loadEntityJsonParams = async ({slug}) => {
+const loadEntityJsonParams = async ({ slug }) => {
   console.log("LOAD CALLED");
   const data = await request(`/${pluginId}/export/loadEntityJsonParams`, {
     method: 'POST',
@@ -41,4 +48,5 @@ export default {
   saveEntityJson,
   commitEntityJson,
   loadEntityJsonParams,
+  genericApi,
 };

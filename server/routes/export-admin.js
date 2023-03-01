@@ -27,6 +27,14 @@ module.exports = {
     },
     {
       method: 'POST',
+      path: '/export/genericApi',
+      handler: 'exportAdmin.genericApi',
+      config: {
+        policies: [],
+      },
+    },
+    {
+      method: 'POST',
       path: '/export/loadEntityJsonParams',
       handler: 'exportAdmin.loadEntityJsonParams',
       config: {
