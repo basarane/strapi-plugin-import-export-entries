@@ -77,7 +77,9 @@ const HomePage = () => {
       });
       console.log("DONE", res);
       setSaveStatus(2);
-      loadEntityJsonParams();
+      setTimeout(() => {
+        loadEntityJsonParams();
+      }, 1000);
     } catch (err) {
       console.log("err  ", err);
       setSaveStatus(3);
@@ -227,7 +229,7 @@ const HomePage = () => {
                       </Typography>
                     </Flex>
                   }
-                  { config && config.buildJobs && 
+                  {config && config.buildJobs &&
                     <Flex gap={4}>
                       <Typography variant="beta">
                         Build Status: {!buildStatus && "Loading..."} {buildStatus && "Loaded"}
