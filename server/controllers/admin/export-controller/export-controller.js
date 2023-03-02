@@ -38,11 +38,22 @@ const hasPermissions = (ctx) => {
   return !!allowedSlugs.length;
 };
 
+const hasPermissions2 = (ctx) => {
+  const { userAbility } = ctx.state;
+  const slugs = getAllSlugs();
+  const allowedSlugs = slugs.filter((slug) => {
+    const permissionChecker = strapi.plugin('content-manager').service('permission-checker').create({ userAbility, model: slug });
+    return permissionChecker.can.read();
+  });
+
+  return !!allowedSlugs.length;
+};
+
 
 const saveEntityJson = async (ctx) => {
   if (!hasPermissions(ctx)) {
     return ctx.forbidden();
-  }  
+  }
   console.log("export-controller.js: saveEntityJson");
   let data = await getService('export').saveEntityJson({});
   ctx.body = {
@@ -51,11 +62,36 @@ const saveEntityJson = async (ctx) => {
 };
 
 const commitEntityJson = async (ctx) => {
+  console.log("export-controller.js: commitEntityJson: ctx.request.body=" + JSON.stringify(ctx.request.body));
+  if (!hasPermissions2(ctx)) {
+    return ctx.forbidden();
+  }
+  let { branch } = ctx.request.body;
+  console.log("export-controller.js: commitEntityJson");
+  let data = await getService('export').commitEntityJson({ branch });
+  ctx.body = {
+    data,
+  };
+};
+
+const genericApi = async (ctx) => {
+  console.log("export-controller.js: genericApi: ctx.request.body=" + JSON.stringify(ctx.request.body));
+  if (!hasPermissions2(ctx)) {
+    return ctx.forbidden();
+  }
+  console.log("export-controller.js: genericApi");
+  let data = await getService('export').genericApi(ctx.request.body);
+  ctx.body = {
+    data,
+  };
+};
+const loadEntityJsonParams = async (ctx) => {
+  console.log("export-controller.js: loadEntityJsonParams: ctx.request.body=" + JSON.stringify(ctx.request.body));
   if (!hasPermissions(ctx)) {
     return ctx.forbidden();
-  }  
-  console.log("export-controller.js: commitEntityJson");
-  let data = await getService('export').commitEntityJson({});
+  }
+  console.log("export-controller.js: loadEntityJsonParams");
+  let data = await getService('export').loadEntityJsonParams({});
   ctx.body = {
     data,
   };
@@ -65,4 +101,6 @@ module.exports = ({ strapi }) => ({
   exportData: handleAsyncError(exportData),
   saveEntityJson: handleAsyncError(saveEntityJson),
   commitEntityJson: handleAsyncError(commitEntityJson),
+  genericApi: handleAsyncError(genericApi),
+  loadEntityJsonParams: handleAsyncError(loadEntityJsonParams),
 });
