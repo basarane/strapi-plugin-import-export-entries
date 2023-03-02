@@ -195,7 +195,7 @@ const HomePage = () => {
                           onChange={(value) => setBranch(value)}
                           disabled={!diff || commitStatus === 1 || loadStatus == 1}
                         >
-                          {config.branches.map((branch) => (
+                          {config.branches && config.branches.map((branch) => (
                             <Option key={branch} value={branch}>
                               {branch}
                             </Option>
@@ -227,14 +227,16 @@ const HomePage = () => {
                       </Typography>
                     </Flex>
                   }
-                  <Flex gap={4}>
-                    <Typography variant="beta">
-                      Build Status: {!buildStatus && "Loading..."} {buildStatus && "Loaded"}
-                      <Button size="S" onClick={getBuildStatus} fullWidth={false}>
-                        REFRESH
-                      </Button>
-                    </Typography>
-                  </Flex>
+                  { config && config.buildJobs && 
+                    <Flex gap={4}>
+                      <Typography variant="beta">
+                        Build Status: {!buildStatus && "Loading..."} {buildStatus && "Loaded"}
+                        <Button size="S" onClick={getBuildStatus} fullWidth={false}>
+                          REFRESH
+                        </Button>
+                      </Typography>
+                    </Flex>
+                  }
                   {buildStatus &&
                     <Flex gap={4}>
                       <TabGroup label="Some stuff for the label" id="tabs">
