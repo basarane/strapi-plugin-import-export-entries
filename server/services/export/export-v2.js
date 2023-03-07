@@ -43,7 +43,7 @@ const pruneHierarchy = (orig, hierarchy) => {
     }
   }
 };
-const exportDataV2 = async ({ slug, search, applySearch, deepness = 5, hierarchy = null }) => {
+const exportDataV2 = async ({ slug, search, applySearch, deepness = 5, hierarchy = null, populate = null }) => {
   slug = CustomSlugToSlug[slug] || slug;
 
   let entries = {};
@@ -51,7 +51,7 @@ const exportDataV2 = async ({ slug, search, applySearch, deepness = 5, hierarchy
     for (const slug of getAllSlugs()) {
       const hierarchyOrig = buildSlugHierarchy(slug, deepness);
       pruneHierarchy(hierarchyOrig, hierarchy);
-      const slugEntries = await findEntriesForHierarchy(slug, hierarchyOrig, deepness, { ...(applySearch ? { search } : {}) });
+      const slugEntries = await findEntriesForHierarchy(slug, hierarchyOrig, deepness, { ...(applySearch ? { search } : {}), populate });
       entries = mergeObjects(entries, slugEntries);
     }
   } else {
@@ -59,8 +59,8 @@ const exportDataV2 = async ({ slug, search, applySearch, deepness = 5, hierarchy
     for (const slug of slugs) {
       const hierarchyOrig = buildSlugHierarchy(slug, deepness);
       pruneHierarchy(hierarchyOrig, hierarchy);
-      console.log(slug, hierarchyOrig);
-      const slugEntries = await findEntriesForHierarchy(slug, hierarchyOrig, deepness, { ...(applySearch ? { search } : {}) });
+      console.log("exportDataV2", slug, hierarchyOrig, populate);
+      const slugEntries = await findEntriesForHierarchy(slug, hierarchyOrig, deepness, { ...(applySearch ? { search } : {}), populate });
       entries = mergeObjects(entries, slugEntries);
     }
   }
@@ -78,14 +78,13 @@ const exportDataV2 = async ({ slug, search, applySearch, deepness = 5, hierarchy
   return fileContent;
 };
 
-const findEntriesForHierarchy = async (slug, hierarchy, deepness, { search, ids }) => {
+const findEntriesForHierarchy = async (slug, hierarchy, deepness, { search, ids, populate }) => {
   let storedData = {};
 
   if (slug === 'admin::user') {
     return storedData;
   }
-
-  let entries = await findEntries(slug, deepness, { search, ids })
+  let entries = await findEntries(slug, deepness, populate, { search, ids })
     .then((entries) => {
       entries = toArray(entries).filter(Boolean);
       const isModelLocalized = !!hierarchy?.localizations;
@@ -259,10 +258,10 @@ const findEntriesForHierarchy = async (slug, hierarchy, deepness, { search, ids 
   return storedData;
 };
 
-const findEntries = async (slug, deepness, { search, ids }) => {
+const findEntries = async (slug, deepness, populate, { search, ids }) => {
   try {
     const queryBuilder = new ObjectBuilder();
-    queryBuilder.extend(getPopulateFromSchema(slug, deepness));
+    queryBuilder.extend(getPopulateFromSchema(slug, deepness, populate));
     if (search) {
       queryBuilder.extend(buildFilterQuery(search));
     } else if (ids) {
@@ -324,7 +323,7 @@ const getConverter = (dataFormat) => {
   return converter;
 };
 
-const getPopulateFromSchema = (slug, deepness = 5) => {
+const getPopulateFromSchema = (slug, deepness = 5, populate = null) => {
   if (deepness <= 1) {
     return true;
   }
@@ -332,8 +331,11 @@ const getPopulateFromSchema = (slug, deepness = 5) => {
   if (slug === 'admin::user') {
     return undefined;
   }
+  const populateOriginal = populate;
+  if (populate)
+    return { populate };
 
-  const populate = {};
+  populate = {};
   const model = strapi.getModel(slug);
   for (const [attributeName, attribute] of Object.entries(getModelPopulationAttributes(model))) {
     if (!attribute) {
@@ -357,7 +359,6 @@ const getPopulateFromSchema = (slug, deepness = 5) => {
       populate[attributeName] = true;
     }
   }
-
   return isEmpty(populate) ? true : { populate };
 };
 
@@ -398,11 +399,9 @@ const getModelPopulationAttributes = (model) => {
   if (model.uid === 'plugin::upload.file') {
     const { related, ...attributes } = model.attributes;
     // return omit(attributes, ['updatedAt']);
-    // console.log(attributes, "vs", omit(attributes, ['updatedAt']));
     return attributes;
   }
   // return omit(model.attributes, ['updatedAt']);
-  // console.log(model.attributes, "vs", omit(model.attributes, ['updatedAt']));
   return model.attributes;
 };
 
