@@ -325,6 +325,21 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
     // if (slug !== "plugin::upload.file") {
     console.log("updateEntryRelation", slug, id, datum);
     await strapi.db.query(slug).update({ where: { id }, data: datum });
+    // if (slug !== "api::sss.sss") {
+    // } else {
+    //   const res = await strapi.db.query(slug).update({ where: { id }, data: datum, populate: ["Items"]});
+    //   console.log("res", res);
+    //   await strapi.entityService.update(slug, id, {
+    //     data: {
+    //       Items: [
+    //         {Question: "test1", Answer: "test1", Order: 1, __component: "sss.sss-item"},
+    //         {Question: "test2", Answer: "test1", Order: 2, __component: "sss.sss-item"},
+    //         {Question: "test3", Answer: "test1", Order: 3, __component: "sss.sss-item"},
+    //       ]
+    //     },
+    //   });
+
+    // }
     // }
   }
 };

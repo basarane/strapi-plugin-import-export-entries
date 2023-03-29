@@ -271,8 +271,10 @@ const findEntries = async (slug, deepness, populate, { search, ids }) => {
         },
       });
     }
-
-    const entries = await strapi.entityService.findMany(slug, queryBuilder.get());
+    let entries = await strapi.entityService.findMany(slug, queryBuilder.get());
+    if (!Array.isArray(entries)) {
+      entries = [entries];
+    }
 
     return entries.map((entry) => omit(entry, ['updatedAt', 'createdAt'])); // @ersin - omit updatedAt and createdAt
   } catch (_) {
