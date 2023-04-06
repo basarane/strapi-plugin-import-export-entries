@@ -276,7 +276,7 @@ const findEntries = async (slug, deepness, populate, { search, ids }) => {
       entries = [entries];
     }
 
-    return entries.map((entry) => omit(entry, ['updatedAt', 'createdAt'])); // @ersin - omit updatedAt and createdAt
+    return entries.map((entry) => omit(entry, ['updatedAt', 'createdAt', 'updatedBy', 'createdBy'])); // @ersin - omit updatedAt and createdAt
   } catch (_) {
     return [];
   }
