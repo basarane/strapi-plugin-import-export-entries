@@ -33,6 +33,7 @@ const commitEntityJson = async ({ branch }) => {
     const toBranch = branch;
     if (toBranch != currentBranch) {
         res3 = child_process.execSync(`git checkout ${toBranch}`, { stdio: 'inherit' });
+        res3 = child_process.execSync(`git pull`, { stdio: 'inherit' });
         res4 = child_process.execSync(`git merge ${currentBranch}`, { stdio: 'inherit' });
         res5 = child_process.execSync(`git push origin ${toBranch}`, { stdio: 'inherit' });
         res7 = child_process.execSync(`git checkout ${currentBranch}`, { stdio: 'inherit' });
