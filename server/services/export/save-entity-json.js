@@ -64,11 +64,20 @@ const loadEntityJsonParams = async ({ }) => {
 
 const genericApi = async ({action, payload}) => {
     console.log("genericApi service called", action, payload);
+    const commandLineParams = [];
+    for (const key in payload) {
+        const value = payload[key];
+        commandLineParams.push(`--${key} ${value}`);
+    }
     switch (action) {
         case "buildStatus":
             var child_process = require('child_process');
-            const res = child_process.execSync(`node strapi-scripts/build-status.mjs`).toString().trim();
-            var status = JSON.parse(res);
+            const res = child_process.execSync(`node strapi-scripts/build-status.mjs ${commandLineParams.join(" ")}`).toString().trim();
+            var status = res;
+            try {
+                status = JSON.parse(res);
+            } catch (e) {
+            }
             return { success: true, buildStatus: status };
     }
     return { success: true };
