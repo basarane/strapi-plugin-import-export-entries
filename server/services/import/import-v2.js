@@ -324,9 +324,28 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
   } else if (importStage === 'relationAttributes') {
     // if (slug !== "plugin::upload.file") {
     console.log("updateEntryRelation", slug, id, datum);
-    await strapi.db.query(slug).update({ where: { id }, data: datum });
     // if (slug !== "api::sss.sss") {
+    //   await strapi.db.query(slug).update({ where: { id }, data: datum });
     // } else {
+    const model = getModel(slug);
+    // console.log("MODEL", model);
+    const componentAttributeNames = Object.keys(model.attributes).filter(p => model.attributes[p].type === "component");
+    const componentAttributes = componentAttributeNames.map(p => ({ ...model.attributes[p], name: p }));
+    for (const attr of componentAttributes) {
+      console.log(await strapi.db.connection.raw(`delete from ${model.__schema__.info.pluralName}_components where entity_id = ${id} and field = '${attr.name}' and component_id in( ${datum[attr.name].join(",")})`));
+    }
+    console.log(await strapi.db.query(slug).update({ where: { id }, data: datum }));
+    for (const attr of componentAttributes) {
+      console.log(await strapi.db.connection.raw(`update ${model.__schema__.info.pluralName}_components set component_type = '${attr.component}' where entity_id = ${id} and field = '${attr.name}' and component_id in( ${datum[attr.name].join(",")}) `));
+    }
+
+    // }
+
+    // console.log(await strapi.db.connection.raw(`delete from ssses_components where entity_id = ${id} and field = 'Items' and component_id in( 4, 5, 6, 7, 8,9, 10, 11, 12, 13,14, 15)`));
+    // const res = await strapi.db.query(slug).update({ where: { id }, data: datum });
+    // console.log("UPDATE RES", res);
+    // console.log(await strapi.db.connection.raw("update ssses_components set component_type = 'sss.sss-item'"));
+
     //   const res = await strapi.db.query(slug).update({ where: { id }, data: datum, populate: ["Items"]});
     //   console.log("res", res);
     //   await strapi.entityService.update(slug, id, {
@@ -339,7 +358,6 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
     //     },
     //   });
 
-    // }
     // }
   }
 };
