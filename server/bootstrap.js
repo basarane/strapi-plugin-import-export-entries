@@ -10,9 +10,15 @@ const registerModelsHooks = async () => {
   const roles = await strapi
     .service("plugin::users-permissions.role")
     .find();
+  const publicRole = roles.filter((role) => role.type === "public")[0];
+  if (!publicRole) {
+    console.error("No public role found");
+    return;
+  }
+
   const _public = await strapi
     .service("plugin::users-permissions.role")
-    .findOne(roles.filter((role) => role.type === "public")[0].id);
+    .findOne(publicRole.id);
 
   for (const permission of Object.keys(_public.permissions)) {
     for (const controller of Object.keys(
