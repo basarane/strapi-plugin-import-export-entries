@@ -29,8 +29,6 @@ import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system'
 
 import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system';
 
-import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system';
-
 console.log(InjectedGenerateButton);
 const padding = [8, 0, 0];
 
