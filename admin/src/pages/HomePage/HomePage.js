@@ -12,6 +12,7 @@ import Write from '@strapi/icons/Write';
 import { Header } from '../../components/Header';
 import { InjectedExportButton } from '../../components/InjectedExportButton';
 import { InjectedImportButton } from '../../components/InjectedImportButton';
+import { InjectedGenerateButton } from '../../components/Injected/generate';
 import { useI18n } from '../../hooks/useI18n';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { dataFormats } from '../../utils/dataFormats';
@@ -26,6 +27,7 @@ import { useDownloadFile } from '../../hooks/useDownloadFile';
 import { RawTable, RawTh, RawTd, RawTr, RawThead, RawTbody } from '@strapi/design-system';
 import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system';
 
+console.log(InjectedGenerateButton);
 const padding = [8, 0, 0];
 
 function msToTime(s) {
@@ -176,7 +178,11 @@ const HomePage = () => {
               <Typography variant="alpha">KOMPUTER/SOTKA CUSTOM</Typography>
 
               <Box>
+
                 <Flex direction="column" alignItems="start" gap={4}>
+                  <Flex gap={4}>
+                    <InjectedGenerateButton />
+                  </Flex>
                   <Flex gap={4}>
                     <Typography variant="beta">
                       Current branch: {config && config.currentBranch}

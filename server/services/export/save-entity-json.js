@@ -61,7 +61,7 @@ const loadEntityJsonParams = async ({ }) => {
     return { success: true, res: { config: { ...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff } } };
 }
 
-const genericApi = async ({action, payload}) => {
+const genericApi = async ({ action, payload }) => {
     console.log("genericApi service called", action, payload);
     switch (action) {
         case "buildStatus":
@@ -69,6 +69,11 @@ const genericApi = async ({action, payload}) => {
             const res = child_process.execSync(`node strapi-scripts/build-status.mjs`).toString().trim();
             var status = JSON.parse(res);
             return { success: true, buildStatus: status };
+        case "getSchema":
+            const models = strapi.db.config.models.filter(p => (p.kind === "collectionType" || p.kind === "singleType") && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
+            const components = strapi.db.config.models.filter(p => p.modelType === "component" && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
+            console.log("getSchema", components);
+            return { success: true, models: models, components: components };
     }
     return { success: true };
 }
