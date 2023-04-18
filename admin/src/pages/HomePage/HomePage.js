@@ -27,6 +27,10 @@ import { useDownloadFile } from '../../hooks/useDownloadFile';
 import { RawTable, RawTh, RawTd, RawTr, RawThead, RawTbody } from '@strapi/design-system';
 import { Tabs, Tab, TabGroup, TabPanels, TabPanel } from '@strapi/design-system';
 
+import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system';
+
+import { ModalLayout, ModalBody, ModalHeader, ModalFooter } from '@strapi/design-system';
+
 console.log(InjectedGenerateButton);
 const padding = [8, 0, 0];
 
@@ -69,6 +73,7 @@ const HomePage = () => {
   const [config, setConfig] = useState(null);
   const [diff, setDiff] = useState("");
   const [buildStatus, setBuildStatus] = useState(null);
+  const [buildLog, setBuildLog] = useState(null);
 
   const saveEntityJson = async () => {
     console.log("HERE");
@@ -79,7 +84,9 @@ const HomePage = () => {
       });
       console.log("DONE", res);
       setSaveStatus(2);
-      loadEntityJsonParams();
+      setTimeout(() => {
+        loadEntityJsonParams();
+      }, 1000);
     } catch (err) {
       console.log("err  ", err);
       setSaveStatus(3);
@@ -152,9 +159,17 @@ const HomePage = () => {
     }
   };
   const getBuildStatus = () => {
-    genericApi("buildStatus", { filter: "all" }).then((res) => {
+    genericApi("buildStatus", {}).then((res) => {
       if (res.data.success) {
         setBuildStatus(res.data.buildStatus);
+        console.log(res.data.buildStatus);
+      }
+    });
+  };
+  const getBuildLog = (name, buildId) => {
+    genericApi("buildStatus", { log: name, build: buildId }).then((res) => {
+      if (res.data.success) {
+        setBuildLog(res.data.buildStatus);
         console.log(res.data.buildStatus);
       }
     });
@@ -170,6 +185,24 @@ const HomePage = () => {
   return (
     <>
       <Header />
+
+      {buildLog && <ModalLayout onClose={() => setBuildLog(null)} labelledBy="title">
+        <ModalHeader>
+          <Typography fontWeight="bold" textColor="neutral800" as="h2" id="title">
+            Build Log
+          </Typography>
+        </ModalHeader>
+        <ModalBody>
+          <Box style={{ width: '100%', height: '100%' }}>
+            <Typography as="pre">
+              {buildLog}
+            </Typography>
+          </Box>
+        </ModalBody>
+        <ModalFooter startActions={<Button onClick={() => setBuildLog(null)} variant="tertiary">
+          Close
+        </Button>} />
+      </ModalLayout>}
 
       <ContentLayout>
         <Flex direction="column" alignItems="start" gap={8}>
@@ -233,7 +266,7 @@ const HomePage = () => {
                       </Typography>
                     </Flex>
                   }
-                  { config && config.buildJobs && 
+                  {config && config.buildJobs &&
                     <Flex gap={4}>
                       <Typography variant="beta">
                         Build Status: {!buildStatus && "Loading..."} {buildStatus && "Loaded"}
@@ -256,12 +289,12 @@ const HomePage = () => {
                           </Tabs>
                         }
                         <TabPanels>
-                          {buildStatus.map((build) => {
+                          {buildStatus.map((buildGroup) => {
                             return (
-                              <TabPanel key={build.name}>
+                              <TabPanel key={buildGroup.name}>
                                 <Box color="neutral800" padding={4} background="neutral0">
                                   <Flex direction="column" alignItems="stretch" gap={4}>
-                                    <Typography variant="beta">{build.name}</Typography>
+                                    <Typography variant="beta">{buildGroup.name}</Typography>
 
                                     <RawTable colCount={3} rowCount={3}>
                                       <RawThead>
@@ -284,10 +317,13 @@ const HomePage = () => {
                                           <RawTh aria-colindex={0}>
                                             <Box color="neutral800" padding={2}>Result</Box>
                                           </RawTh>
+                                          <RawTh aria-colindex={0}>
+                                            <Box color="neutral800" padding={2}>Log</Box>
+                                          </RawTh>
                                         </RawTr>
                                       </RawThead>
                                       <RawTbody>
-                                        {build.builds.map((build, index) => (
+                                        {buildGroup.builds.map((build, index) => (
                                           <RawTr key={`row-${index}`} aria-rowindex={index}>
                                             <RawTd aria-colindex={1}>
                                               <Box color="neutral800" padding={2}>
@@ -319,6 +355,13 @@ const HomePage = () => {
                                             <RawTd aria-colindex={2}>
                                               <Box color="neutral800" padding={2}>
                                                 {build.result}
+                                              </Box>
+                                            </RawTd>
+                                            <RawTd aria-colindex={2}>
+                                              <Box color="neutral800" padding={2}>
+                                                <Button startIcon={<Write />} size="S" onClick={() => getBuildLog(buildGroup.name, build.id)} fullWidth={false} variant="success">
+                                                  Show Log
+                                                </Button>
                                               </Box>
                                             </RawTd>
                                           </RawTr>

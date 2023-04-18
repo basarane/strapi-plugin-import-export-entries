@@ -33,6 +33,7 @@ const commitEntityJson = async ({ branch }) => {
     const toBranch = branch;
     if (toBranch != currentBranch) {
         res3 = child_process.execSync(`git checkout ${toBranch}`, { stdio: 'inherit' });
+        res3 = child_process.execSync(`git pull`, { stdio: 'inherit' });
         res4 = child_process.execSync(`git merge ${currentBranch}`, { stdio: 'inherit' });
         res5 = child_process.execSync(`git push origin ${toBranch}`, { stdio: 'inherit' });
         res7 = child_process.execSync(`git checkout ${currentBranch}`, { stdio: 'inherit' });
@@ -63,11 +64,20 @@ const loadEntityJsonParams = async ({ }) => {
 
 const genericApi = async ({ action, payload }) => {
     console.log("genericApi service called", action, payload);
+    const commandLineParams = [];
+    for (const key in payload) {
+        const value = payload[key];
+        commandLineParams.push(`--${key} ${value}`);
+    }
     switch (action) {
         case "buildStatus":
             var child_process = require('child_process');
-            const res = child_process.execSync(`node strapi-scripts/build-status.mjs`).toString().trim();
-            var status = JSON.parse(res);
+            const res = child_process.execSync(`node strapi-scripts/build-status.mjs ${commandLineParams.join(" ")}`).toString().trim();
+            var status = res;
+            try {
+                status = JSON.parse(res);
+            } catch (e) {
+            }
             return { success: true, buildStatus: status };
         case "getSchema":
             const models = strapi.db.config.models.filter(p => (p.kind === "collectionType" || p.kind === "singleType") && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
