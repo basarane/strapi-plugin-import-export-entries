@@ -2,6 +2,7 @@ import './style.css';
 
 import { Button } from '@strapi/design-system/Button';
 import { Checkbox } from '@strapi/design-system/Checkbox';
+import { TextInput } from '@strapi/design-system';
 import { Flex } from '@strapi/design-system/Flex';
 import { Box } from '@strapi/design-system/Box';
 import { Grid, GridItem } from '@strapi/design-system/Grid';
@@ -30,13 +31,11 @@ const templates = [
   {
     name: 'list',
     displayName: 'List View',
-    folder: 'list',
     isCollection: true,
   },
   {
     name: 'detail',
     displayName: 'Detail View',
-    folder: 'detail',
   },
 ];
 
@@ -45,6 +44,9 @@ const ignoreFields = ['createdAt', 'updatedAt', 'publishedAt', 'createdBy', 'upd
 const DEFAULT_OPTIONS = {
   collection: '',
   template: '',
+  slug: '',
+  path: 'app/model',
+  fields: {},
 };
 
 export const GenerateModal = ({ onClose }) => {
@@ -58,6 +60,10 @@ export const GenerateModal = ({ onClose }) => {
   const handleSetOption = (key) => (value) => {
     setOptions((previous) => ({ ...previous, [key]: value }));
   };
+  const handleSetField = (key) => (value) => {
+    setOptions((previous) => ({ ...previous, fields: { ...previous.fields, [key]: value } }));
+  };
+
   const getData = async () => {
     setFetchingData(true);
     try {
@@ -67,6 +73,7 @@ export const GenerateModal = ({ onClose }) => {
       });
       const models = res.data.models;
       const components = res.data.components;
+      console.log(models, components);
       const recurseTypes = ['component', 'dynamiczone', 'relation'];
       models.forEach((model) => {
         for (const attr in model.attributes) {
@@ -88,6 +95,53 @@ export const GenerateModal = ({ onClose }) => {
       });
     } finally {
       setFetchingData(false);
+    }
+  };
+
+  const onGenerateClick = async () => {
+    try {
+
+      const model = data.models.find((m) => m.uid === options.collection);
+
+      console.log("MODEL", model);
+      const fields = [];
+      Object.keys(options.fields).filter(p => options.fields[p]).forEach(p => {
+        const path = p.split(".");
+        let current = fields;
+        let modelAttr = model.attributes;
+        for (let token of path) {
+          // console.log("TOKEN", token, current, modelAttr);
+          let field = current.find(p=>p.name === token);
+          if (!field) {
+            field = {...modelAttr[token], name: token};
+            current.push(field);
+            if (field.attributes) {
+              field.attributes = [];
+            }
+          }
+          modelAttr = modelAttr[token].attributes;
+          current = field.attributes;
+        }
+        // current = { ...modelAttr };
+      });
+      console.log("FIELDS", fields);
+      // return { success: true };
+      // return;
+
+      const res = await ExportProxy.genericApi({
+        action: 'generate',
+        payload: {
+          options: {...options, fields: fields},
+        },
+      });
+      console.log('RES', res);
+      notify(i18n('plugin.message.export.success.title'), i18n('plugin.message.export.success.message'), 'success');
+      onClose();
+    } catch (err) {
+      handleRequestErr(err, {
+        403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
+        default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
+      });
     }
   };
 
@@ -120,10 +174,10 @@ export const GenerateModal = ({ onClose }) => {
         return (
           <>
             <Flex direction="column" alignItems="start" gap="16px" style={{ paddingLeft: '20px' }}>
-              <Checkbox id={name} value={options[name]} onChange={(e) => handleSetOption(name)(e.target.checked)}>
+              <Checkbox id={name} value={options.fields[name]} onChange={(e) => handleSetField(name)(e.target.checked)}>
                 {p}
               </Checkbox>
-              {options[name] && attr.attributes && fieldChecks(attr.attributes, name)}
+              {options.fields[name] && attr.attributes && fieldChecks(attr.attributes, name)}
             </Flex>
           </>
         );
@@ -172,6 +226,20 @@ export const GenerateModal = ({ onClose }) => {
                   ))}
                 </Select>
               </Flex>
+              {selectedModel &&
+                <Flex direction="column" alignItems="start" gap="16px">
+                  <Select id="slug" label={'Slug'} required placeholder={'Select One'} value={options.slug} onChange={handleSetOption('slug')}>
+                    {Object.keys(selectedModel.attributes).filter((p) => ignoreFields.indexOf(p) < 0).map((attr) => ({ ...selectedModel.attributes[attr], name: attr })).map((attr) => (
+                      <Option key={attr.name} value={attr.name}>
+                        {attr.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Flex>
+              }
+              <Flex direction="column" alignItems="start" gap="16px">
+                <TextInput placeholder="This is a content placeholder" label="Path" name="path" hint="Path in next.js app" onChange={(e) => handleSetOption('path')(e.target.value)} value={options.path} required />
+              </Flex>
               {selectedModel && (
                 <Flex direction="column" alignItems="start" gap="16px">
                   <Typography as="h3" textColor="neutral800">
@@ -190,8 +258,7 @@ export const GenerateModal = ({ onClose }) => {
               {!data && <Button onClick={getData}>GET DATA</Button>}
               {!!data && (
                 <>
-                  <Button variant="secondary">{i18n('plugin.cta.copy-to-clipboard')}</Button>
-                  <Button>{i18n('plugin.cta.download-file')}</Button>
+                  <Button onClick={onGenerateClick}>Generate</Button>
                 </>
               )}
             </>

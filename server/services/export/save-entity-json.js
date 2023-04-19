@@ -62,6 +62,25 @@ const loadEntityJsonParams = async ({ }) => {
     return { success: true, res: { config: { ...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff } } };
 }
 
+const glob = require("glob");
+const { template } = require('lodash');
+const path = require("path");
+
+const globPromise = (pattern, options) => new Promise((resolve, reject) => {
+    glob(pattern, options, (err, files) => {
+        if (err) {
+            reject(err);
+        } else {
+            resolve(files);
+        }
+    });
+});
+
+let getDirectories = async (src) => {
+    return (await globPromise(src + '/**/*')).map(p => path.relative(src, p));
+};
+
+
 const genericApi = async ({ action, payload }) => {
     console.log("genericApi service called", action, payload);
     const commandLineParams = [];
@@ -69,6 +88,18 @@ const genericApi = async ({ action, payload }) => {
         const value = payload[key];
         commandLineParams.push(`--${key} ${value}`);
     }
+    const getSchema = async () => {
+        const models = strapi.db.config.models.filter(p => (p.kind === "collectionType" || p.kind === "singleType") && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
+        const components = strapi.db.config.models.filter(p => p.modelType === "component" && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
+        return {
+            models: models,
+            components: components,
+        }
+    }
+    let schema = null;
+    if (["generate", "getSchema"].indexOf(action) >= 0)
+        schema = await getSchema();
+
     switch (action) {
         case "buildStatus":
             var child_process = require('child_process');
@@ -80,10 +111,52 @@ const genericApi = async ({ action, payload }) => {
             }
             return { success: true, buildStatus: status };
         case "getSchema":
-            const models = strapi.db.config.models.filter(p => (p.kind === "collectionType" || p.kind === "singleType") && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
-            const components = strapi.db.config.models.filter(p => p.modelType === "component" && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
-            console.log("getSchema", components);
-            return { success: true, models: models, components: components };
+            return { success: true, models: schema.models, components: schema.components };
+        case "generate":
+            console.log("generate", payload, __dirname);
+            let fs = require('fs');
+            let path = require('path');
+            const ejs = require('ejs');
+            
+            const model = schema.models.find(p => p.uid === payload.options.collection);
+
+            let filePath = path.join(__dirname, "../../../", "templates", payload.options.template);
+            let nextPath = path.join(__dirname, "../../../../../../../", "site", payload.options.path);
+            if (!fs.existsSync(nextPath)) {
+                fs.mkdirSync(nextPath, { recursive: true });
+            }
+
+            const files = await getDirectories(filePath);
+            console.log("generate", filePath, files, nextPath);
+            for (const file of files) {
+                const templateFile = path.join(filePath, file);
+                const nextFile = path.join(nextPath, file);
+                if (fs.lstatSync(templateFile).isDirectory()) {
+                    if (!fs.existsSync(nextFile)) {
+                        fs.mkdirSync(nextFile, { recursive: true });
+                    }
+                } else {
+                    if (fs.existsSync(nextFile)) {
+                        console.error("File already exists", nextFile);
+                        // continue;
+                    }
+
+                    let templateSource = fs.readFileSync(templateFile, 'utf8');
+
+                    const templateParams = {
+                        componentName: model.globalId,
+                        modelName: model.info.pluralName,
+                        slug: payload.options.slug,
+                        attributes: payload.options.fields,
+                        populateArray: [],
+                    };
+                    const output = ejs.render(templateSource, templateParams);
+                    fs.writeFileSync(nextFile, output);
+                    // fs.copyFileSync(templateFile, nextFile);
+                }
+            }
+            return { success: true };
+
     }
     return { success: true };
 }
