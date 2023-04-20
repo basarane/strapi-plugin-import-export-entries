@@ -117,9 +117,19 @@ const genericApi = async ({ action, payload }) => {
             let fs = require('fs');
             let path = require('path');
             const ejs = require('ejs');
-            
-            const model = schema.models.find(p => p.uid === payload.options.collection);
 
+            const model = schema.models.find(p => p.uid === payload.options.collection);
+            const populateArray = [];
+            function populateArrayRecursion(prefix, attributes) {
+                for (const attribute of attributes) {
+                    const path = (prefix ? prefix + "." : "") + attribute.name;
+                    if (attribute.attributes && !attribute.attributes.find(p => p.attributes))
+                        populateArray.push(path);
+                    else if (attribute.attributes)
+                        populateArrayRecursion(path, attribute.attributes);
+                }
+            }
+            populateArrayRecursion("", payload.options.attributes);
             let filePath = path.join(__dirname, "../../../", "templates", payload.options.template);
             let nextPath = path.join(__dirname, "../../../../../../../", "site", payload.options.path);
             if (!fs.existsSync(nextPath)) {
@@ -147,8 +157,8 @@ const genericApi = async ({ action, payload }) => {
                         componentName: model.globalId,
                         modelName: model.info.pluralName,
                         slug: payload.options.slug,
-                        attributes: payload.options.fields,
-                        populateArray: [],
+                        attributes: payload.options.attributes,
+                        populateArray: populateArray,
                     };
                     const output = ejs.render(templateSource, templateParams);
                     fs.writeFileSync(nextFile, output);

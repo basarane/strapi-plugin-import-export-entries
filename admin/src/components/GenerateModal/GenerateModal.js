@@ -131,7 +131,7 @@ export const GenerateModal = ({ onClose }) => {
       const res = await ExportProxy.genericApi({
         action: 'generate',
         payload: {
-          options: {...options, fields: fields},
+          options: {...options, attributes: fields},
         },
       });
       console.log('RES', res);
