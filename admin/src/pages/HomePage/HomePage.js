@@ -211,9 +211,11 @@ const HomePage = () => {
               <Box>
 
                 <Flex direction="column" alignItems="start" gap={4}>
-                  <Flex gap={4}>
-                    <InjectedGenerateButton />
-                  </Flex>
+                  {config && config.currentBranch === "dev" &&
+                    <Flex gap={4}>
+                      <InjectedGenerateButton />
+                    </Flex>
+                  }
                   <Flex gap={4}>
                     <Typography variant="beta">
                       Current branch: {config && config.currentBranch}
