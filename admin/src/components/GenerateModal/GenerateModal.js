@@ -136,7 +136,7 @@ export const GenerateModal = ({ onClose }) => {
       });
       console.log('RES', res);
       notify(i18n('plugin.message.export.success.title'), i18n('plugin.message.export.success.message'), 'success');
-      onClose();
+      // onClose();
     } catch (err) {
       handleRequestErr(err, {
         403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
