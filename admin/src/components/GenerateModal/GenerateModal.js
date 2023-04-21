@@ -37,6 +37,10 @@ const templates = [
     name: 'detail',
     displayName: 'Detail View',
   },
+  {
+    name: 'empty',
+    displayName: 'Empty Page',
+  },
 ];
 
 const ignoreFields = ['createdAt', 'updatedAt', 'publishedAt', 'createdBy', 'updatedBy'];
