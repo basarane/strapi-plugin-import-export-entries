@@ -89,7 +89,7 @@ const genericApi = async ({ action, payload }) => {
         commandLineParams.push(`--${key} ${value}`);
     }
     const getSchema = async () => {
-        const models = strapi.db.config.models.filter(p => (p.kind === "collectionType" || p.kind === "singleType") && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
+        const models = strapi.db.config.models.filter(p => (p.kind === "collectionType" || p.kind === "singleType") && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible || p.uid === "plugin::upload.file"));
         const components = strapi.db.config.models.filter(p => p.modelType === "component" && (!p.pluginOptions || !p.pluginOptions["content-manager"] || p.pluginOptions["content-manager"].visible));
         return {
             models: models,
@@ -130,17 +130,19 @@ const genericApi = async ({ action, payload }) => {
                 }
             }
             populateArrayRecursion("", payload.options.attributes);
-            let filePath = path.join(__dirname, "../../../", "templates", payload.options.template);
-            let nextPath = path.join(__dirname, "../../../../../../../", "site", payload.options.path);
+            const templateRoot = path.join(__dirname, "../../../", "templates");
+            let filePath = path.join(templateRoot, payload.options.template);
+            let nextPath = path.join(__dirname, "../../../../../../../", "site", "app"); //payload.options.path
             if (!fs.existsSync(nextPath)) {
                 fs.mkdirSync(nextPath, { recursive: true });
             }
 
-            const files = await getDirectories(filePath);
+            // const files = await getDirectories(filePath);
+            const files = ["index.js"];
             console.log("generate", filePath, files, nextPath);
             for (const file of files) {
                 const templateFile = path.join(filePath, file);
-                const nextFile = path.join(nextPath, file);
+                const nextFile = path.join(nextPath, payload.options.path); //file
                 if (fs.lstatSync(templateFile).isDirectory()) {
                     if (!fs.existsSync(nextFile)) {
                         fs.mkdirSync(nextFile, { recursive: true });
@@ -155,12 +157,17 @@ const genericApi = async ({ action, payload }) => {
 
                     const templateParams = {
                         componentName: model.globalId,
-                        modelName: model.info.pluralName,
+                        model: model,
                         slug: payload.options.slug,
                         attributes: payload.options.attributes,
                         populateArray: populateArray,
                     };
-                    const output = ejs.render(templateSource, templateParams);
+                    const ejsOptions = {
+                        views: [templateRoot],
+                    }
+                    console.log("templateParams", templateRoot);
+                    const output = ejs.render(templateSource, templateParams, ejsOptions);
+                    fs.mkdirSync(path.dirname(nextFile), { recursive: true })
                     fs.writeFileSync(nextFile, output);
                     // fs.copyFileSync(templateFile, nextFile);
                 }

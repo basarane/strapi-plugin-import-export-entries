@@ -45,7 +45,7 @@ const DEFAULT_OPTIONS = {
   collection: '',
   template: '',
   slug: '',
-  path: 'app/model',
+  path: '',
   fields: {},
 };
 
@@ -75,16 +75,20 @@ export const GenerateModal = ({ onClose }) => {
       const components = res.data.components;
       console.log(models, components);
       const recurseTypes = ['component', 'dynamiczone', 'relation'];
-      models.forEach((model) => {
-        for (const attr in model.attributes) {
-          if (recurseTypes.includes(model.attributes[attr].type)) {
-            const component = components.find((c) => c.uid === model.attributes[attr].component);
-            if (component) model.attributes[attr].attributes = component.attributes;
-            const relation = models.find((m) => m.uid === model.attributes[attr].target);
-            if (relation) model.attributes[attr].attributes = relation.attributes;
+      const recurseAttributes = (container) => {
+        container.forEach((model) => {
+          for (const attr in model.attributes) {
+            if (recurseTypes.includes(model.attributes[attr].type)) {
+              const component = components.find((c) => c.uid === model.attributes[attr].component);
+              if (component) model.attributes[attr].attributes = component.attributes;
+              const relation = models.find((m) => m.uid === model.attributes[attr].target);
+              if (relation) model.attributes[attr].attributes = relation.attributes;
+            }
           }
-        }
-      });
+        });
+      };
+      recurseAttributes(models);
+      recurseAttributes(components);
 
       setData(res.data);
       console.log('DATA', res.data);
@@ -103,17 +107,15 @@ export const GenerateModal = ({ onClose }) => {
 
       const model = data.models.find((m) => m.uid === options.collection);
 
-      console.log("MODEL", model);
       const fields = [];
       Object.keys(options.fields).filter(p => options.fields[p]).forEach(p => {
         const path = p.split(".");
         let current = fields;
         let modelAttr = model.attributes;
         for (let token of path) {
-          // console.log("TOKEN", token, current, modelAttr);
-          let field = current.find(p=>p.name === token);
+          let field = current.find(p => p.name === token);
           if (!field) {
-            field = {...modelAttr[token], name: token};
+            field = { ...modelAttr[token], name: token };
             current.push(field);
             if (field.attributes) {
               field.attributes = [];
@@ -131,7 +133,7 @@ export const GenerateModal = ({ onClose }) => {
       const res = await ExportProxy.genericApi({
         action: 'generate',
         payload: {
-          options: {...options, attributes: fields},
+          options: { ...options, attributes: fields },
         },
       });
       console.log('RES', res);
@@ -156,10 +158,8 @@ export const GenerateModal = ({ onClose }) => {
   if (data && data.models && options.collection) {
     availableTemplates = templates;
     const model = data.models.find((m) => m.uid === options.collection);
-    console.log('MODEL', model);
     if (model.kind === 'singleType') availableTemplates = templates.filter((p) => !p.isCollection);
   }
-  console.log('Options', options);
   let selectedModel = null;
   if (data && data.models && options.collection) {
     selectedModel = data.models.find((m) => m.uid === options.collection);
@@ -172,14 +172,14 @@ export const GenerateModal = ({ onClose }) => {
         const attr = attributes[p];
         const name = prefix ? `${prefix}.${p}` : p;
         return (
-          <>
+          <React.Fragment key={name} >
             <Flex direction="column" alignItems="start" gap="16px" style={{ paddingLeft: '20px' }}>
               <Checkbox id={name} value={options.fields[name]} onChange={(e) => handleSetField(name)(e.target.checked)}>
                 {p}
               </Checkbox>
               {options.fields[name] && attr.attributes && fieldChecks(attr.attributes, name)}
             </Flex>
-          </>
+          </React.Fragment>
         );
       });
   }
@@ -238,7 +238,7 @@ export const GenerateModal = ({ onClose }) => {
                 </Flex>
               }
               <Flex direction="column" alignItems="start" gap="16px">
-                <TextInput placeholder="This is a content placeholder" label="Path" name="path" hint="Path in next.js app" onChange={(e) => handleSetOption('path')(e.target.value)} value={options.path} required />
+                <TextInput placeholder="File path" label="Path" name="path" hint="Path in next.js app" onChange={(e) => handleSetOption('path')(e.target.value)} value={options.path} required />
               </Flex>
               {selectedModel && (
                 <Flex direction="column" alignItems="start" gap="16px">

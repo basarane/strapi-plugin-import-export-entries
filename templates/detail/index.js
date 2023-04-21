@@ -1,4 +1,6 @@
 import { fetchAPI } from "/lib/api";
+import Image from "/components/image";
+
 <%
 
 function myCamel(str) {
@@ -9,7 +11,7 @@ function myCamel(str) {
 
 function makeComponents(prefix, attributes) {
 	attributes.forEach((attribute, index) => {
-		if (attribute.attributes) {
+		if (attribute.attributes && attribute.target != "plugin::upload.file") {
 			const componentName = prefix + myCamel(attribute.name);
 			const suffix = attribute.type === "relation"?".attributes":"";
 			makeComponents(componentName+"_", attribute.attributes);
@@ -31,12 +33,15 @@ function putFields(prefix, name, attributes) {
 		if (!attribute.attributes) { %>
 			<div>{<%- name %>.<%- attribute.name %>}</div><% 
 		} else { 
+			const isFile = attribute.target === "plugin::upload.file";
 			const isSingle = (attribute.type === "component" && !attribute.repeatable) || (attribute.type === "relation" && attribute.relation.endsWith("One"));
 			const suffix = attribute.type === "relation"?".data":"";
-			if (!isSingle) {%>
+			if (isFile) { %>
+			<div><Image image={<%- name %>.<%- attribute.name %>} /></div><%
+			} else if (!isSingle) {%>
 			<div>
 				{<%- name %>.<%- attribute.name %><%- suffix %>.map(sub => (
-					<<%- prefix+myCamel(attribute.name) %> item={sub} />
+					<<%- prefix+myCamel(attribute.name) %> key={sub.id} item={sub} />
 				))}
 			</div><% 
 			} else { %>
@@ -46,13 +51,17 @@ function putFields(prefix, name, attributes) {
 		</div>
 	}</><%	
 }
-
+%><%
 makeComponents("", attributes); 
 
 %>
 
 const <%- componentName %> = async ({ params }) => {
-    const item = (await fetchAPI("/<%- modelName %>", { "filters[<%- slug %>][$eq]": params.id,  populate: <%- JSON.stringify(populateArray) %>})).data[0];
+    <% if (model.kind === "singleType") {
+		%>const item = (await fetchAPI("/<%- model.info.singularName %>", { populate: <%- JSON.stringify(populateArray) %>})).data;
+		<% } else { 
+		%>const item = (await fetchAPI("/<%- model.info.pluralName %>", { "filters[<%- slug %>][$eq]": params.id,  populate: <%- JSON.stringify(populateArray) %>})).data[0];
+	<% } %>
     return (<% putFields("", "item.attributes", attributes); %>
 	);
 }
