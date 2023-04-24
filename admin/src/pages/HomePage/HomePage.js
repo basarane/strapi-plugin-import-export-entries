@@ -211,7 +211,7 @@ const HomePage = () => {
               <Box>
 
                 <Flex direction="column" alignItems="start" gap={4}>
-                  {config && config.currentBranch === "dev" &&
+                  {config && (config.currentBranch !== "prod" && config.currentBranch !== "staging") &&
                     <Flex gap={4}>
                       <InjectedGenerateButton />
                     </Flex>
