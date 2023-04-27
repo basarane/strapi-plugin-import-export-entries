@@ -21,7 +21,7 @@ function addToCss(path) {
  }
 
 function myCamel(str) {
-	const camelCased = str.replace(/\_([a-z])/g, function (g) { return g[1].toUpperCase(); });
+	const camelCased = str.replace(/[\_-]([a-z])/g, function (g) { return g[1].toUpperCase(); });
 	const capitalized = camelCased.charAt(0).toUpperCase() + camelCased.slice(1);
 	return capitalized;
 }
@@ -70,8 +70,17 @@ function putFields(path, name, attributes, disableCheck, cssName) {
 			const isFile = attribute.target === "plugin::upload.file";
 			const isSingle = (attribute.type === "component" && !attribute.repeatable) || (attribute.type === "relation" && attribute.relation.endsWith("One"));
 			const suffix = attribute.type === "relation"?".data":"";
-			if (isFile) { %>
-			<div><Image image={<%- name %>.<%- attribute.name %>} /></div><%
+			if (isFile) { 
+				if (!isSingle) { %>
+			<div<%putCss(attribute.name+"s") %>>
+				{<%- name %>.<%- attribute.name %><%- suffix %>.map(sub => (
+					<div<%putCss(attribute.name) %>><Image image={{data: sub}} /></div>
+				))}
+			</div><%
+				} else { %>
+			<div<%putCss(attribute.name) %>><Image image={<%- name %>.<%- attribute.name %>} /></div>					
+					<%
+				}
 			} else if (!isSingle) {
 				addToCss([cssName, ...path, attribute.name])%>
 			<div<%putCss(attribute.name+"s") %>>
