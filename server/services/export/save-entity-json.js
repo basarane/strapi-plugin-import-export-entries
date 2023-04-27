@@ -113,7 +113,7 @@ const genericApi = async ({ action, payload }) => {
         case "getSchema":
             return { success: true, models: schema.models, components: schema.components };
         case "generate":
-            console.log("generate", payload, __dirname);
+            console.log("generate", payload.options, __dirname);
             let fs = require('fs');
             let path = require('path');
             const ejs = require('ejs');
@@ -132,14 +132,15 @@ const genericApi = async ({ action, payload }) => {
             populateArrayRecursion("", payload.options.attributes);
             const templateRoot = path.join(__dirname, "../../../", "templates");
             let filePath = path.join(templateRoot, payload.options.template);
-            let nextPath = path.join(__dirname, "../../../../../../../", "site", "app"); //payload.options.path
+            let nextRoot = path.join(__dirname, "../../../../../../../", "site"); //payload.options.path
+            let nextPath = path.join(nextRoot, "app"); //payload.options.path
             if (!fs.existsSync(nextPath)) {
                 fs.mkdirSync(nextPath, { recursive: true });
             }
 
             // const files = await getDirectories(filePath);
             const files = ["index.js"];
-            console.log("generate", filePath, files, nextPath);
+            let libSource = fs.readFileSync(path.join(templateRoot,"lib.js"), 'utf8');
             for (const file of files) {
                 const templateFile = path.join(filePath, file);
                 const nextFile = path.join(nextPath, payload.options.path); //file
@@ -152,23 +153,47 @@ const genericApi = async ({ action, payload }) => {
                         console.error("File already exists", nextFile);
                         // continue;
                     }
-
+                    function removeExtension(filename) {
+                        return filename.substring(0, filename.lastIndexOf('.')) || filename;
+                    }
                     let templateSource = fs.readFileSync(templateFile, 'utf8');
-
+                    let cssFileName = removeExtension(payload.options.path).replace("/", "_") +(payload.options.css==="module"?".module":"");
                     const templateParams = {
                         componentName: model.globalId,
                         model: model,
                         slug: payload.options.slug,
                         attributes: payload.options.attributes,
                         populateArray: populateArray,
+                        css: payload.options.css,
+                        cssFileName: cssFileName + ".css",
+                        output: {},
                     };
                     const ejsOptions = {
                         views: [templateRoot],
                     }
                     console.log("templateParams", templateRoot);
-                    const output = ejs.render(templateSource, templateParams, ejsOptions);
+                    const output = ejs.render(libSource + templateSource, templateParams, ejsOptions);
+                    console.log("output", templateParams.output.cssTree);
                     fs.mkdirSync(path.dirname(nextFile), { recursive: true })
                     fs.writeFileSync(nextFile, output);
+
+                    if (payload.options.css !== "none") {
+                        const cssFile = path.join(nextRoot, "styles", cssFileName + ".less");
+                        let cssOutput = "";
+                        
+                        function createCssTree(nodes) {
+                            let css = "";
+                            for (const node of nodes) {
+                                css +=`.${node.name} {\n`;
+                                if (node.children)
+                                    css += createCssTree(node.children);
+                                css +=`}\n`;
+                            }
+                            return css;
+                        }
+                        const cssText = createCssTree(templateParams.output.cssTree);
+                        fs.writeFileSync(cssFile, cssText);
+                    }
                     // fs.copyFileSync(templateFile, nextFile);
                 }
             }

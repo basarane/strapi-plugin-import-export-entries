@@ -36,6 +36,7 @@ const templates = [
   {
     name: 'detail',
     displayName: 'Detail View',
+    isSlug: true,
   },
   {
     name: 'empty',
@@ -77,7 +78,6 @@ export const GenerateModal = ({ onClose }) => {
       });
       const models = res.data.models;
       const components = res.data.components;
-      console.log(models, components);
       const recurseTypes = ['component', 'dynamiczone', 'relation'];
       const recurseAttributes = (container) => {
         container.forEach((model) => {
@@ -95,7 +95,6 @@ export const GenerateModal = ({ onClose }) => {
       recurseAttributes(components);
 
       setData(res.data);
-      console.log('DATA', res.data);
     } catch (err) {
       handleRequestErr(err, {
         403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
@@ -116,7 +115,16 @@ export const GenerateModal = ({ onClose }) => {
         const path = p.split(".");
         let current = fields;
         let modelAttr = model.attributes;
+        let runningPath = "";
         for (let token of path) {
+          // eger parent checklenmediyse child'lari ekleme
+          runningPath += (runningPath ? "." : "") + token;
+          if (runningPath) {
+            if (!options.fields[runningPath]) {
+              console.log("BREAK!");
+              break;
+            }
+          }
           let field = current.find(p => p.name === token);
           if (!field) {
             field = { ...modelAttr[token], name: token };
@@ -130,7 +138,6 @@ export const GenerateModal = ({ onClose }) => {
         }
         // current = { ...modelAttr };
       });
-      console.log("FIELDS", fields);
       // return { success: true };
       // return;
 
@@ -140,7 +147,6 @@ export const GenerateModal = ({ onClose }) => {
           options: { ...options, attributes: fields },
         },
       });
-      console.log('RES', res);
       notify(i18n('plugin.message.export.success.title'), i18n('plugin.message.export.success.message'), 'success');
       // onClose();
     } catch (err) {
@@ -168,6 +174,15 @@ export const GenerateModal = ({ onClose }) => {
   if (data && data.models && options.collection) {
     selectedModel = data.models.find((m) => m.uid === options.collection);
   }
+  let selectedTemplate = templates.filter((p) => p.name === options.template)[0];
+  let cssOptions = [
+    { value: 'none', label: 'None' },
+    { value: 'global', label: 'Global CSS' },
+    { value: 'module', label: 'CSS Modules' },
+
+  ];
+
+  let firstRowStyle = { flex: "1 1 100%" };
   function fieldChecks(attributes, prefix) {
     const depth = prefix ? prefix.split('').reduce((acc, curr) => acc + (curr === 'j' ? 1 : 0), 0) + 1 : 0;
     return Object.keys(attributes)
@@ -209,8 +224,9 @@ export const GenerateModal = ({ onClose }) => {
           )}
           {data && !fetchingData && (
             <>
-              <Grid gap={8}>
-                <GridItem col={12}>
+              <Flex direction="row" alignItems="start" gap="16px" >
+                <Box style={firstRowStyle} >
+
                   <Select id="collection" label={'Collection'} required placeholder={'Select One'} value={options.collection} onChange={handleSetOption('collection')}>
                     {data.models.map((model) => (
                       <Option key={model.uid} value={model.uid}>
@@ -218,29 +234,41 @@ export const GenerateModal = ({ onClose }) => {
                       </Option>
                     ))}
                   </Select>
-                </GridItem>
-              </Grid>
+                </Box>
 
-              <Flex direction="column" alignItems="start" gap="16px">
-                <Select id="template" label={'Template'} required placeholder={'Select One'} value={options.template} onChange={handleSetOption('template')}>
-                  {availableTemplates.map((template) => (
-                    <Option key={template.name} value={template.name}>
-                      {template.displayName}
-                    </Option>
-                  ))}
-                </Select>
-              </Flex>
-              {selectedModel &&
-                <Flex direction="column" alignItems="start" gap="16px">
-                  <Select id="slug" label={'Slug'} required placeholder={'Select One'} value={options.slug} onChange={handleSetOption('slug')}>
-                    {Object.keys(selectedModel.attributes).filter((p) => ignoreFields.indexOf(p) < 0).map((attr) => ({ ...selectedModel.attributes[attr], name: attr })).map((attr) => (
-                      <Option key={attr.name} value={attr.name}>
-                        {attr.name}
+                <Box style={firstRowStyle} >
+
+                  <Select id="template" label={'Template'} required placeholder={'Select One'} value={options.template} onChange={handleSetOption('template')}>
+                    {availableTemplates.map((template) => (
+                      <Option key={template.name} value={template.name}>
+                        {template.displayName}
                       </Option>
                     ))}
                   </Select>
-                </Flex>
-              }
+                </Box>
+                {selectedModel && selectedTemplate && selectedTemplate.isSlug &&
+                  <Box style={firstRowStyle} >
+
+                    <Select id="slug" label={'Slug'} required placeholder={'Select One'} value={options.slug} onChange={handleSetOption('slug')}>
+                      {Object.keys(selectedModel.attributes).filter((p) => ignoreFields.indexOf(p) < 0).map((attr) => ({ ...selectedModel.attributes[attr], name: attr })).map((attr) => (
+                        <Option key={attr.name} value={attr.name}>
+                          {attr.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Box>
+                }
+                <Box style={firstRowStyle} >
+                  <Select id="css" label={'CSS'} required placeholder={'Select One'} value={options.css} onChange={handleSetOption('css')}>
+                    {cssOptions.map((option) => (
+                      <Option key={option.value} value={option.value}>
+                        {option.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Box>
+              </Flex>
+
               <Flex direction="column" alignItems="start" gap="16px">
                 <TextInput placeholder="File path" label="Path" name="path" hint="Path in next.js app" onChange={(e) => handleSetOption('path')(e.target.value)} value={options.path} required />
               </Flex>
