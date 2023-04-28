@@ -149,7 +149,7 @@ const genericApi = async ({ action, payload }) => {
             for (const file of files) {
                 const templateFile = path.join(filePath, file);
                 const nextFile = path.join(nextPath, payload.options.path); //file
-                let cssFileName = removeExtension(payload.options.path).replace("/", "_") + (payload.options.css === "module" ? ".module" : "");
+                let cssFileName = removeExtension(payload.options.path).replace(/\//g, "_") + (payload.options.css === "module" ? ".module" : "");
                 const cssFile = path.join(nextRoot, "styles", cssFileName + ".less");
 
                 if (fs.lstatSync(templateFile).isDirectory()) {
