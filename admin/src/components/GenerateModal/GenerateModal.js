@@ -130,7 +130,6 @@ export const GenerateModal = ({ onClose }) => {
           runningPath += (runningPath ? "." : "") + token;
           if (runningPath) {
             if (!options.fields[runningPath]) {
-              console.log("BREAK!");
               break;
             }
           }
@@ -157,7 +156,6 @@ export const GenerateModal = ({ onClose }) => {
         },
       });
       const { success, message } = res.data;
-      console.log(res);
       if (!success)
         // alert(message);
         setOverwriteMessage(message);
