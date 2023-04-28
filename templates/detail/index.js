@@ -1,5 +1,8 @@
 <%
 makeComponents([], attributes, myCamel(model.info.singularName)); 
+
+output.cssTree = cssTree;
+
 %>
 const <%- componentName %> = async ({ params }) => {
     <% if (model.kind === "singleType") {

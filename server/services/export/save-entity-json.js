@@ -62,6 +62,7 @@ const loadEntityJsonParams = async ({ }) => {
     return { success: true, res: { config: { ...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff } } };
 }
 
+const { error } = require('console');
 const glob = require("glob");
 const { template } = require('lodash');
 const path = require("path");
@@ -129,6 +130,9 @@ const genericApi = async ({ action, payload }) => {
                         populateArrayRecursion(path, attribute.attributes);
                 }
             }
+            function removeExtension(filename) {
+                return filename.substring(0, filename.lastIndexOf('.')) || filename;
+            }
             populateArrayRecursion("", payload.options.attributes);
             const templateRoot = path.join(__dirname, "../../../", "templates");
             let filePath = path.join(templateRoot, payload.options.template);
@@ -138,26 +142,34 @@ const genericApi = async ({ action, payload }) => {
                 fs.mkdirSync(nextPath, { recursive: true });
             }
 
+            console.log("OPTIONS", payload.options)
             // const files = await getDirectories(filePath);
             const files = ["index.js"];
-            let libSource = fs.readFileSync(path.join(templateRoot,"lib.js"), 'utf8');
+            let libSource = fs.readFileSync(path.join(templateRoot, "lib.js"), 'utf8');
             for (const file of files) {
                 const templateFile = path.join(filePath, file);
                 const nextFile = path.join(nextPath, payload.options.path); //file
+                let cssFileName = removeExtension(payload.options.path).replace("/", "_") + (payload.options.css === "module" ? ".module" : "");
+                const cssFile = path.join(nextRoot, "styles", cssFileName + ".less");
+
                 if (fs.lstatSync(templateFile).isDirectory()) {
                     if (!fs.existsSync(nextFile)) {
                         fs.mkdirSync(nextFile, { recursive: true });
                     }
                 } else {
-                    if (fs.existsSync(nextFile)) {
+                    if ((fs.existsSync(nextFile) || fs.existsSync(cssFile)) && !payload.options.overwrite) {
                         console.error("File already exists", nextFile);
+                        let errorMsg = "File(s) already exists: ";
+                        let existingFiles = [];
+                        if (fs.existsSync(nextFile))
+                            existingFiles.push(nextFile);
+                        if (fs.existsSync(cssFile))
+                            existingFiles.push(cssFile);
+                        errorMsg += "\n\n" + existingFiles.join("\n");
+                        return { success: false, message: errorMsg };
                         // continue;
                     }
-                    function removeExtension(filename) {
-                        return filename.substring(0, filename.lastIndexOf('.')) || filename;
-                    }
                     let templateSource = fs.readFileSync(templateFile, 'utf8');
-                    let cssFileName = removeExtension(payload.options.path).replace("/", "_") +(payload.options.css==="module"?".module":"");
                     const templateParams = {
                         componentName: model.globalId,
                         model: model,
@@ -178,16 +190,13 @@ const genericApi = async ({ action, payload }) => {
                     fs.writeFileSync(nextFile, output);
 
                     if (payload.options.css !== "none") {
-                        const cssFile = path.join(nextRoot, "styles", cssFileName + ".less");
-                        let cssOutput = "";
-                        
                         function createCssTree(nodes) {
                             let css = "";
                             for (const node of nodes) {
-                                css +=`.${node.name} {\n`;
+                                css += `.${node.name} {\n`;
                                 if (node.children)
                                     css += createCssTree(node.children);
-                                css +=`}\n`;
+                                css += `}\n`;
                             }
                             return css;
                         }

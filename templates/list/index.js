@@ -1,7 +1,6 @@
 <%
 makeComponents([], attributes, myCamel(model.info.singularName)); 
 
-console.log(JSON.stringify(cssTree, null, 3));
 output.cssTree = cssTree;
 
 %>
