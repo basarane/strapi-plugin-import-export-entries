@@ -45,6 +45,11 @@ const templates = [
     isSlug: true,
   },
   {
+    name: 'form',
+    displayName: 'Form (react-hook-form)',
+    isCollection: true,
+  },
+  {
     name: 'empty',
     displayName: 'Empty Page',
   },

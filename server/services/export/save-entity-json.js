@@ -1,8 +1,6 @@
 const saveEntityJson = async ({ }) => {
-    console.log("saveEntityJson service called");
     var child_process = require('child_process');
     // const out1 = child_process.execSync('netstat -ano | find "' + port + '" | find "LISTEN"');
-    console.log("Current directory:", process.cwd());
 
     const res = child_process.execSync(`node strapi-scripts/export-data.js`, { stdio: 'inherit' });
 
@@ -11,7 +9,6 @@ const saveEntityJson = async ({ }) => {
 
 
 const commitEntityJson = async ({ branch }) => {
-    console.log("commitEntityJson service called", branch);
     var child_process = require('child_process');
     const gitAdd = (path) => {
         try {
@@ -22,7 +19,6 @@ const commitEntityJson = async ({ branch }) => {
     };
 
     // const out1 = child_process.execSync('netstat -ano | find "' + port + '" | find "LISTEN"');
-    console.log("Current directory:", process.cwd());
     // const res = {someres: true};
     // const res = child_process.execSync(`node strapi-scripts/export-data.js`, { stdio: 'inherit' });
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
@@ -54,11 +50,9 @@ const commitEntityJson = async ({ branch }) => {
 
 const loadEntityJsonParams = async ({ }) => {
     var child_process = require('child_process');
-    console.log("loadEntityJsonParams service called");
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
     const currentDiff = child_process.execSync('git status Entity/ Entity.json public/uploads/ -s').toString().trim();
     const sotkaConfig = require('../../../../../../sotka-config.js');
-    console.log("Current directory:", process.cwd());
     return { success: true, res: { config: { ...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff } } };
 }
 
@@ -83,7 +77,6 @@ let getDirectories = async (src) => {
 
 
 const genericApi = async ({ action, payload }) => {
-    console.log("genericApi service called", action, payload);
     const commandLineParams = [];
     for (const key in payload) {
         const value = payload[key];
@@ -114,7 +107,6 @@ const genericApi = async ({ action, payload }) => {
         case "getSchema":
             return { success: true, models: schema.models, components: schema.components };
         case "generate":
-            console.log("generate", payload.options, __dirname);
             let fs = require('fs');
             let path = require('path');
             const ejs = require('ejs');
@@ -142,33 +134,43 @@ const genericApi = async ({ action, payload }) => {
                 fs.mkdirSync(nextPath, { recursive: true });
             }
 
-            console.log("OPTIONS", payload.options)
-            // const files = await getDirectories(filePath);
-            const files = ["index.js"];
+            const files = await getDirectories(filePath);
+            // const files = ["index.js"];
             let libSource = fs.readFileSync(path.join(templateRoot, "lib.js"), 'utf8');
+
+            let cssFileName = removeExtension(payload.options.path).replace(/\//g, "_") + (payload.options.css === "module" ? ".module" : "");
+            const cssFile = path.join(nextRoot, "styles", cssFileName + ".less");
+
+            let existingFiles = [];
             for (const file of files) {
+                const isIndex = file === "index.js";
+
                 const templateFile = path.join(filePath, file);
-                const nextFile = path.join(nextPath, payload.options.path); //file
-                let cssFileName = removeExtension(payload.options.path).replace(/\//g, "_") + (payload.options.css === "module" ? ".module" : "");
-                const cssFile = path.join(nextRoot, "styles", cssFileName + ".less");
+                const nextFile = isIndex ? path.join(nextPath, payload.options.path) : path.join(nextPath, path.dirname(payload.options.path), file);
+                if (!fs.lstatSync(templateFile).isDirectory() && fs.existsSync(nextFile)) {
+                    existingFiles.push(nextFile);
+                }
+            }
+            if (fs.existsSync(cssFile))
+                existingFiles.push(cssFile);
+            if (existingFiles.length > 0 && !payload.options.overwrite) {
+                console.error("File already exists", existingFiles);
+                let errorMsg = "File(s) already exists: ";
+                errorMsg += "\n\n" + existingFiles.join("\n");
+                return { success: false, message: errorMsg };
+            }
+
+            for (const file of files) {
+                const isIndex = file === "index.js";
+
+                const templateFile = path.join(filePath, file);
+                const nextFile = isIndex ? path.join(nextPath, payload.options.path) : path.join(nextPath, path.dirname(payload.options.path), file);
 
                 if (fs.lstatSync(templateFile).isDirectory()) {
                     if (!fs.existsSync(nextFile)) {
                         fs.mkdirSync(nextFile, { recursive: true });
                     }
                 } else {
-                    if ((fs.existsSync(nextFile) || fs.existsSync(cssFile)) && !payload.options.overwrite) {
-                        console.error("File already exists", nextFile);
-                        let errorMsg = "File(s) already exists: ";
-                        let existingFiles = [];
-                        if (fs.existsSync(nextFile))
-                            existingFiles.push(nextFile);
-                        if (fs.existsSync(cssFile))
-                            existingFiles.push(cssFile);
-                        errorMsg += "\n\n" + existingFiles.join("\n");
-                        return { success: false, message: errorMsg };
-                        // continue;
-                    }
                     let templateSource = fs.readFileSync(templateFile, 'utf8');
                     const templateParams = {
                         componentName: model.globalId,
@@ -178,18 +180,17 @@ const genericApi = async ({ action, payload }) => {
                         populateArray: populateArray,
                         css: payload.options.css,
                         cssFileName: cssFileName + ".css",
+                        baseDir: path.dirname(payload.options.path),
                         output: {},
                     };
                     const ejsOptions = {
                         views: [templateRoot],
                     }
-                    console.log("templateParams", templateRoot);
                     const output = ejs.render(libSource + templateSource, templateParams, ejsOptions);
-                    console.log("output", templateParams.output.cssTree);
                     fs.mkdirSync(path.dirname(nextFile), { recursive: true })
                     fs.writeFileSync(nextFile, output);
 
-                    if (payload.options.css !== "none") {
+                    if (payload.options.css !== "none" && isIndex) {
                         function createCssTree(nodes) {
                             let css = "";
                             for (const node of nodes) {
@@ -200,8 +201,10 @@ const genericApi = async ({ action, payload }) => {
                             }
                             return css;
                         }
-                        const cssText = createCssTree(templateParams.output.cssTree);
-                        fs.writeFileSync(cssFile, cssText);
+                        if (templateParams.output.cssTree) {
+                            const cssText = createCssTree(templateParams.output.cssTree);
+                            fs.writeFileSync(cssFile, cssText);
+                        }
                     }
                     // fs.copyFileSync(templateFile, nextFile);
                 }
