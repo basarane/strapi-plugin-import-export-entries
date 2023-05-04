@@ -92,22 +92,37 @@ export const GenerateModal = ({ onClose }) => {
       });
       const models = res.data.models;
       const components = res.data.components;
-      const recurseTypes = ['component', 'dynamiczone', 'relation'];
       const recurseAttributes = (container) => {
         container.forEach((model) => {
           for (const attr in model.attributes) {
-            if (recurseTypes.includes(model.attributes[attr].type)) {
-              const component = components.find((c) => c.uid === model.attributes[attr].component);
-              if (component) model.attributes[attr].attributes = component.attributes;
-              const relation = models.find((m) => m.uid === model.attributes[attr].target);
-              if (relation) model.attributes[attr].attributes = relation.attributes;
+            switch (model.attributes[attr].type) {
+              case 'component':
+                model.attributes[attr].attributes = components.find((c) => c.uid === model.attributes[attr].component).attributes;
+                break;
+              case 'dynamiczone':
+                model.attributes[attr].attributes = model.attributes[attr].components.reduce((acc, c) => {
+                  try {
+                    acc[c.replace(/\./g, "|")] = components.find((c2) => c2.uid === c);
+                  } catch (err) {
+                    console.error(err);
+                  }
+                  return acc;
+                }, {});
+                break;
+              case 'relation':
+                try {
+                  if (model.attributes[attr].target !== "plugin::upload.file")
+                    model.attributes[attr].attributes = models.find((m) => m.uid === model.attributes[attr].target).attributes;
+                } catch (err) {
+                  console.error(err);
+                }
+                break;
             }
           }
         });
       };
       recurseAttributes(models);
       recurseAttributes(components);
-
       setData(res.data);
     } catch (err) {
       handleRequestErr(err, {
@@ -153,7 +168,6 @@ export const GenerateModal = ({ onClose }) => {
       });
       // return { success: true };
       // return;
-
       const res = await ExportProxy.genericApi({
         action: 'generate',
         payload: {

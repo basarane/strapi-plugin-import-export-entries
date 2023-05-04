@@ -112,13 +112,15 @@ const genericApi = async ({ action, payload }) => {
             const ejs = require('ejs');
 
             const model = schema.models.find(p => p.uid === payload.options.collection);
-            const populateArray = [];
+            let populateArray = [];
             function populateArrayRecursion(prefix, attributes) {
                 for (const attribute of attributes) {
                     const path = (prefix ? prefix + "." : "") + attribute.name;
-                    if (attribute.attributes && !attribute.attributes.find(p => p.attributes))
+                    //&& !attribute.attributes.find(p => p.attributes)
+                    if ((attribute.attributes) || attribute.target === "plugin::upload.file") {
                         populateArray.push(path);
-                    else if (attribute.attributes)
+                    }
+                    if (attribute.attributes)
                         populateArrayRecursion(path, attribute.attributes);
                 }
             }
@@ -126,6 +128,8 @@ const genericApi = async ({ action, payload }) => {
                 return filename.substring(0, filename.lastIndexOf('.')) || filename;
             }
             populateArrayRecursion("", payload.options.attributes);
+            populateArray = populateArray.map(p => p.replace(/\.[^.]+\|[^.]+/g, ""));
+            populateArray = populateArray.filter((item, index) => !populateArray.find((p, index2) => p.startsWith(item) && index !== index2));
             const templateRoot = path.join(__dirname, "../../../", "templates");
             let filePath = path.join(templateRoot, payload.options.template);
             let nextRoot = path.join(__dirname, "../../../../../../../", "site"); //payload.options.path
@@ -159,7 +163,6 @@ const genericApi = async ({ action, payload }) => {
                 errorMsg += "\n\n" + existingFiles.join("\n");
                 return { success: false, message: errorMsg };
             }
-
             for (const file of files) {
                 const isIndex = file === "index.js";
 
