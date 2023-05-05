@@ -20,7 +20,7 @@ function myCamel(str) {
 
 function makeComponent(componentPath, suffix, attributes, rootCss) {
 %>
-const <%- componentPath.join("_") %> = async ({ item }) => {
+const <%- componentPath.join("_") %> = <%- !noFetch?"async ":"" %>({ item }) => {
 	return (<% putFields(componentPath, "item" + suffix, attributes, false, rootCss); %>
 	);
 }

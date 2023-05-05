@@ -63,6 +63,7 @@ const DEFAULT_OPTIONS = {
   slug: '',
   path: '',
   fields: {},
+  noFetch: false,
 };
 
 export const GenerateModal = ({ onClose }) => {
@@ -321,8 +322,12 @@ export const GenerateModal = ({ onClose }) => {
                 </Box>
               </Flex>
 
-              <Flex direction="column" alignItems="start" gap="16px">
+              <Flex direction="row" alignItems="center" gap="16px">
                 <TextInput placeholder="File path" label="Path" name="path" hint="Path in next.js app" onChange={(e) => handleSetOption('path')(e.target.value)} value={options.path} required />
+                <Checkbox id="noFetch" value={options.noFetch} onChange={(e) => setOptions(previous => ({ ...previous, noFetch: e.target.checked }))}>
+                  No fetch / client side
+                </Checkbox>
+
               </Flex>
               {selectedModel && (
                 <Flex direction="column" alignItems="start" gap="16px">

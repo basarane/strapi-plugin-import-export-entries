@@ -175,8 +175,9 @@ const genericApi = async ({ action, payload }) => {
                     }
                 } else {
                     let templateSource = fs.readFileSync(templateFile, 'utf8');
+                    let outputFileName = path.parse(payload.options.path).name;
                     const templateParams = {
-                        componentName: model.globalId,
+                        componentName: outputFileName!="page" ? outputFileName + "Comp" : model.globalId,
                         model: model,
                         slug: payload.options.slug,
                         attributes: payload.options.attributes,
@@ -184,6 +185,7 @@ const genericApi = async ({ action, payload }) => {
                         css: payload.options.css,
                         cssFileName: cssFileName + ".css",
                         baseDir: path.dirname(payload.options.path),
+                        noFetch: payload.options.noFetch,
                         output: {},
                     };
                     const ejsOptions = {
