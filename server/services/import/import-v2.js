@@ -328,17 +328,21 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
     //   await strapi.db.query(slug).update({ where: { id }, data: datum });
     // } else {
     const model = getModel(slug);
-    // console.log("MODEL", model);
+    // console.log("MODEL", JSON.stringify(model, null, 2));
     const componentAttributeNames = Object.keys(model.attributes).filter(p => model.attributes[p].type === "component");
     const componentAttributes = componentAttributeNames.map(p => ({ ...model.attributes[p], name: p }));
+    const tableName = `${model.__schema__.collectionName}_components`;
     for (const attr of componentAttributes) {
-      if (datum[attr.name])
-        console.log(await strapi.db.connection.raw(`delete from ${model.__schema__.info.pluralName}_components where entity_id = ${id} and field = '${attr.name}' and component_id in( ${datum[attr.name].join(",")})`));
+      if (datum[attr.name]) {
+        // console.log("Deleting COMPONENT", attr.name, datum[attr.name].join(","), model.__schema__, id)
+        console.log(await strapi.db.connection.raw(`delete from ${tableName} where entity_id = ${id} and field = '${attr.name}' and component_id in( ${datum[attr.name].join(",")})`));
+      }
     }
     console.log(await strapi.db.query(slug).update({ where: { id }, data: datum }));
     for (const attr of componentAttributes) {
-      if (datum[attr.name])
-        console.log(await strapi.db.connection.raw(`update ${model.__schema__.info.pluralName}_components set component_type = '${attr.component}' where entity_id = ${id} and field = '${attr.name}' and component_id in( ${datum[attr.name].join(",")}) `));
+      if (datum[attr.name]) {
+        console.log(await strapi.db.connection.raw(`update ${tableName} set component_type = '${attr.component}' where entity_id = ${id} and field = '${attr.name}' and component_id in( ${datum[attr.name].join(",")}) `));
+      }
     }
 
     // }
