@@ -23,7 +23,8 @@ const commitEntityJson = async ({ branch }) => {
     // const res = child_process.execSync(`node strapi-scripts/export-data.js`, { stdio: 'inherit' });
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
     const res0 = child_process.execSync(`git pull origin ${currentBranch}`, { stdio: 'inherit' });
-    const res1 = gitAdd("Entity/*") + gitAdd("Entity.json") + gitAdd("public/uploads");
+    const res0b = child_process.execSync(`git submodule update --remote`, { stdio: 'inherit' });
+    const res1 = gitAdd("Entity/*") + gitAdd("Entity.json") + gitAdd("public/uploads") + gitAdd("src/plugins/*");
     const res2 = child_process.execSync(`git commit -m "Commit from strapi"`, { stdio: 'inherit' });
     let res3, res4, res5, res6, res7;
     const toBranch = branch;
@@ -38,6 +39,7 @@ const commitEntityJson = async ({ branch }) => {
     return {
         success: true,
         res: " Pull Res: " + res0 +
+            " Submodule Res: " + res0b +
             " Add Res: " + res1 +
             " Commit Res:" + res2 +
             " Checkout to Res:" + res3 +
