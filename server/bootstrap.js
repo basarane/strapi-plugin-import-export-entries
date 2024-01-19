@@ -46,6 +46,18 @@ const registerModelsHooks = async () => {
   }
   console.log(sotkaConfig);
 
+  // generic subscribe for generic handling
+  strapi.db.lifecycles.subscribe((event) => {
+    if (event.action === "afterUpdate") {
+      console.log("LIFECYCLE", event);
+      let update = {
+        uid: event.model.uid,
+        params: event.params,
+      }
+      console.log(update);
+    }
+  });
+  
 };
 module.exports = async ({ strapi }) => {
   // bootstrap phase
