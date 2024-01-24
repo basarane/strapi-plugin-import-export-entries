@@ -100,6 +100,10 @@ const genericApi = async ({ action, payload }) => {
     if (["generate", "getSchema"].indexOf(action) >= 0)
         schema = await getSchema();
 
+    let fs = require('fs');
+    let path = require('path');
+    const ejs = require('ejs');
+
     switch (action) {
         case "buildStatus":
             var child_process = require('child_process');
@@ -114,10 +118,6 @@ const genericApi = async ({ action, payload }) => {
             return { success: true, models: schema.models, components: schema.components };
         case "generate":
             console.log("generate", payload, __dirname);
-            let fs = require('fs');
-            let path = require('path');
-            const ejs = require('ejs');
-
             const model = schema.models.find(p => p.uid === payload.options.collection);
             const populateArray = [];
             function populateArrayRecursion(prefix, attributes) {
@@ -173,7 +173,72 @@ const genericApi = async ({ action, payload }) => {
                 }
             }
             return { success: true };
+        case "applyChanges":
+            console.log("applyChanges", payload);
+            // Path to the 'changes' directory
+            const changesDirPath = path.join(__dirname, '..', '..', '..', '..', '..', '..', 'changes');
 
+            // Function to read and parse files into objects
+            async function readFilesAndParse() {
+                const files = fs.readdirSync(changesDirPath);
+
+                // Sort files by datetime (assuming filenames start with YYYYMMDDHHMMSS format)
+                files.sort();
+
+                const objects = [];
+
+                for (const file of files) {
+                    const filePath = path.join(changesDirPath, file);
+                    const fileContent = fs.readFileSync(filePath, 'utf8');
+                    try {
+                        const jsonObject = JSON.parse(fileContent);
+                        objects.push(jsonObject);
+                    } catch (error) {
+                        console.error(`Error parsing JSON from file ${file}:`, error);
+                    }
+                }
+                for (const changeList of objects) {
+                    for (const change of changeList.forward) {
+                        if (change.action === "Update") {
+                            console.log("Applying update", change.uid, change.params);
+                            try {
+                                const res = await strapi.db.query(change.uid).update({ ...change.params, change_update: true });
+                                // const res = await strapi.entityService.update(change.uid, change.params.where.id, {...change.params, change_update: true});
+                                console.log("Update result", res);
+                            } catch (e) {
+                                console.error("Error updating", change.uid, change.params, e);
+                            }
+                        }
+                        if (change.action === "Create") {
+                            console.log("Applying create", change.uid, change.params);
+                            try {
+
+                                const res = await strapi.db.query(change.uid).create({ ...change.params, change_update: true });
+                                console.log("Create result", res);
+                            } catch (e) {
+                                console.error("Error creating", change.uid, change.params, e);
+                            }
+                        }
+                        if (change.action === "Delete") {
+                            console.log("Applying delete", change.uid, change.params);
+                            const res = await strapi.db.query(change.uid).delete({ ...change.params, change_update: true });
+                            console.log("Delete result", res);
+                        }
+                    }
+                }
+                return objects;
+            }
+
+            // Using the function
+            readFilesAndParse()
+                .then(objects => {
+                    console.log("Loaded objects:", objects);
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                });
+
+            return { success: true };
     }
     return { success: true };
 }
