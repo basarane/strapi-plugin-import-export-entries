@@ -121,7 +121,7 @@ const registerModelsHooks = async () => {
       return updates;
     }
 
-    const logEvents = ["afterUpdate", "afterCreate", "afterUpdateMany", "afterCreateMany", "afterDelete", "afterDeleteMany", "beforeUpdate"];
+    const logEvents = ["afterFindOne", "afterUpdate", "afterCreate", "afterUpdateMany", "afterCreateMany", "afterDelete", "afterDeleteMany", "beforeUpdate"];
     if (!event.model.uid.startsWith("admin::"))
       console.log("EVENT", event.action, event.model.uid, event.params.data && event.params.data.id)
     if (logEvents.indexOf(event.action) >= 0 && !event.model.uid.startsWith("strapi::") && !event.params.change_update) {
@@ -134,8 +134,11 @@ const registerModelsHooks = async () => {
       if (event.action === "afterCreate") {
         update.params.data.id = event.result.id;
       }
+      if (event.action === "afterDelete") {
+        console.log("AFTER DELETE", event);
+      }
       if (event.action === "afterUpdate") {
-        const current = currentRecords[event.model.uid][update.params.data.id];
+        const current = currentRecords[event.model.uid][update.params.data.id][0];
         if (event.model.modelType !== "component") {
           update.initial = current;
         }
@@ -147,23 +150,37 @@ const registerModelsHooks = async () => {
         // update.params.data = updated;
       }
       if (event.action === "beforeUpdate") {
-        let current = null;
-        if (event.model.kind === "collectionType")
-          current = await strapi.query(event.model.uid).findOne({ id: update.params.data.id, populate: update.params.populate });
-        else
-          current = (await strapi.query(event.model.uid).findMany({ where: { id: { $eq: update.params.data.id } }, populate: update.params.populate }))[0];
+        // let current = null;
+        // if (event.model.kind === "collectionType")
+        //   current = await strapi.query(event.model.uid).findOne({ id: update.params.data.id, populate: update.params.populate });
+        // else
+        //   current = (await strapi.query(event.model.uid).findMany({ where: { id: { $eq: update.params.data.id } }, populate: update.params.populate }))[0];
 
-        // console.log("Current values fetched", event.model.uid, update.params.data.id, current);
+        // // console.log("Current values fetched", event.model.uid, update.params.data.id, current);
+        // if (!currentRecords[event.model.uid]) {
+        //   currentRecords[event.model.uid] = {};
+        // }
+        // currentRecords[event.model.uid][update.params.data.id] = current;
+      } else if (event.action === "afterFindOne") {
+        console.log("afterFindOne", event.model.uid, event.result.id, event.params, event.result);
         if (!currentRecords[event.model.uid]) {
           currentRecords[event.model.uid] = {};
         }
-        currentRecords[event.model.uid][update.params.data.id] = current;
+        // if (!currentRecords[event.model.uid][event.result.id]) {
+        //   currentRecords[event.model.uid][event.result.id] = [];
+        // }
+        // currentRecords[event.model.uid][event.result.id].push(event.result);
+        // currentRecords[event.model.uid][event.result.id].slice(-1);
+        currentRecords[event.model.uid][event.result.id] = [event.result];
+        if (event.model.modelType !== "component") {
+          // console.log("afterFindOne", event.model.uid, event);
+        }
       } else {
         if (event.model.modelType !== "component") {
           // update.params.data
-          writeJsonToFile({
-            forward: addRelatedUpdates(update)
-          });
+          // writeJsonToFile({
+          //   forward: addRelatedUpdates(update)
+          // });
         }
         // console.log(event);
         if (event.model.modelType === "component") {
@@ -174,6 +191,9 @@ const registerModelsHooks = async () => {
             componentUpdates[event.model.uid][event.params.data.id] = addRelatedUpdates(update);
         }
       }
+      writeJsonToFile({
+        event
+      });
 
       // Write the data to a JSON file
     }
