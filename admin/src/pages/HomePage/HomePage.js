@@ -96,6 +96,21 @@ const HomePage = () => {
     }
   };
 
+  const applyChanges = async () => {
+    console.log("HERE");
+    try {
+      genericApi("applyChanges", "mypayload").then((res) => {
+        console.log("DONE", res);
+      });
+    } catch (err) {
+      console.log("err  ", err);
+      handleRequestErr(err, {
+        403: () => notify(i18n('plugin.message.export.error.forbidden.title'), i18n('plugin.message.export.error.forbidden.message'), 'danger'),
+        default: () => notify(i18n('plugin.message.export.error.unexpected.title'), i18n('plugin.message.export.error.unexpected.message'), 'danger'),
+      });
+    } finally {
+    }
+  };
   const commitEntityJson = async () => {
     console.log("HERE");
     setCommitStatus(1);
@@ -225,6 +240,11 @@ const HomePage = () => {
                     <Button startIcon={<Write />} size="L" disabled={saveStatus === 1} onClick={saveEntityJson} fullWidth={false} variant="success">
                       SAVE ENTITY.JSON
                     </Button>
+                    {config?.enableChanges &&
+                      <Button startIcon={<Write />} size="L" disabled={saveStatus === 1} onClick={applyChanges} fullWidth={false} variant="success">
+                        APPLY CHANGES
+                      </Button>
+                    }
                     {config &&
                       <>
                         <Select
