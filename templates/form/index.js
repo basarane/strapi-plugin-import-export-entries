@@ -26,7 +26,7 @@ const Page = () => {
     const resolver = useYupValidationResolver(validationSchema);
 
     const { register, handleSubmit, control, watch, formState: { errors } } = useForm({ resolver });
-    const [onSubmit, formState] = useFormSubmit("/<%- baseDir %>/api");
+    const [onSubmit, formState] = useFormSubmit(process.env.NEXT_PUBLIC_BASE_PATH + "/<%- baseDir %>/api");
     return (
         <>
             {formState === FORM_STATE.SUBMITTED &&
