@@ -13,43 +13,40 @@ const registerModelsHooks = async () => {
     .service("plugin::users-permissions.role")
     .find();
   const publicRole = roles.filter((role) => role.type === "public")[0];
-  if (!publicRole) {
-    console.error("No public role found");
-    return;
-  }
+  if (publicRole) {
+    const _public = await strapi
+      .service("plugin::users-permissions.role")
+      .findOne(publicRole.id);
 
-  const _public = await strapi
-    .service("plugin::users-permissions.role")
-    .findOne(publicRole.id);
-
-  for (const permission of Object.keys(_public.permissions)) {
-    for (const controller of Object.keys(
-      _public.permissions[permission].controllers
-    )) {
-      if (permission.startsWith("api") && stageModels.indexOf(`${permission}.${controller}`) >= 0) {
-        console.info("ALLOW PUBLIC ACCESS", permission, controller);
-        const perms = _public.permissions[permission].controllers[
-          controller
-        ];
-        perms.find.enabled = true;
-        if (perms.findOne)
-          perms.findOne.enabled = true;
+    for (const permission of Object.keys(_public.permissions)) {
+      for (const controller of Object.keys(
+        _public.permissions[permission].controllers
+      )) {
+        if (permission.startsWith("api") && stageModels.indexOf(`${permission}.${controller}`) >= 0) {
+          const perms = _public.permissions[permission].controllers[
+            controller
+          ];
+          perms.find.enabled = true;
+          if (perms.findOne)
+            perms.findOne.enabled = true;
+        }
       }
     }
+    await strapi
+      .service("plugin::users-permissions.role")
+      .updateRole(_public.id, _public);
   }
-  await strapi
-    .service("plugin::users-permissions.role")
-    .updateRole(_public.id, _public);
 
-  const origSotkaConfig = fs.readFileSync("sotka-config.js", "utf8");
-  const sotkaConfig = origSotkaConfig.replace(/stageCollections\s*:\s*"[^"]*"/, `stageCollections: "${stageModels.join(",")}"`);
-  if (origSotkaConfig !== sotkaConfig) {
-    fs.writeFileSync("sotka-config.js", sotkaConfig);
+  try {
+    const origSotkaConfig = fs.readFileSync("sotka-config.js", "utf8");
+    const sotkaConfig = origSotkaConfig.replace(/stageCollections\s*:\s*"[^"]*"/, `stageCollections: "${stageModels.join(",")}"`);
+    if (origSotkaConfig !== sotkaConfig) {
+      fs.writeFileSync("sotka-config.js", sotkaConfig);
+    }
+  } catch (e) {
   }
-  console.info(sotkaConfig);
 
   const sotkaConfigObj = require("../../../../sotka-config.js");
-  console.log(sotkaConfigObj);
 
   if (sotkaConfigObj.enableChanges) {
     const currentRecords = {};
@@ -114,11 +111,9 @@ const registerModelsHooks = async () => {
         // pivotUpdates = entriesWithPivot.map(entry => (componentUpdates[entry.__pivot.component_type][entry.id] || []))
         let updates = [];
 
-        if (update.params.data.id) {
+        if (update.params.data?.id) {
           if (deletedRelations[update.model.uid]) {
             deletedRelations[update.model.uid].forEach((item) => {
-              console.log(JSON.stringify(componentUpdates[item.uid][item.id], null, 2))
-              console.log("DELETED RELATION FOUND", item);
               if (componentUpdates[item.uid][item.id])
                 updates.push(componentUpdates[item.uid][item.id])
             });
@@ -141,20 +136,32 @@ const registerModelsHooks = async () => {
         return updates;
       }
 
-      const logEvents = ["afterFindOne", "afterUpdate", "afterCreate", "afterUpdateMany", "afterCreateMany", "afterDelete", "afterDeleteMany", "beforeUpdate"];
+      function stripModel(updates) {
+        return updates.map((update) => {
+          let newUpdate = { ...update };
+          delete newUpdate.model;
+          return newUpdate;
+        });
+      }
 
-      if (logEvents.indexOf(event.action) >= 0 && !event.model.uid.startsWith("strapi::") && !event.params.change_update) {
+      //"afterDeleteMany", 
+      const logEvents = ["afterFindOne", "afterUpdate", "afterCreate", "afterUpdateMany", "afterCreateMany", "afterDelete", "beforeUpdate"];
+
+      if (logEvents.indexOf(event.action) >= 0 && !event.model.uid.startsWith("strapi::") && !event.model.uid.startsWith("admin::") && !event.model.uid.startsWith("plugin::") && !event.params.change_update) {
         let update = {
           uid: event.model.uid,
           action: event.action.substring(5),
           model: event.model,
           params: event.params,
         }
+        if (!update.params.data) {
+          update.params.data = {};
+        }
         if (event.action === "afterCreate") {
           update.params.data.id = event.result.id;
         }
         if (event.action === "afterDelete") {
-          update.params.data = { id: event.result.id };
+          update.params.data.id = event.result.id;
         }
         if (event.action === "afterDelete") {
           if (parentIds[event.model.uid] && parentIds[event.model.uid][event.result.id]) {
@@ -225,11 +232,10 @@ const registerModelsHooks = async () => {
               }
             });
           }
-          console.log("PARENT IDS", JSON.stringify(parentIds, null, 2));
         } else {
           if (event.model.modelType !== "component") {
             writeJsonToFile({
-              forward: addRelatedUpdates(update)
+              forward: stripModel(addRelatedUpdates(update))
             });
           }
           if (event.model.modelType === "component") {
@@ -251,7 +257,5 @@ const registerModelsHooks = async () => {
 };
 module.exports = async ({ strapi }) => {
   // bootstrap phase
-  console.log("BOOTSTRAP");
   await registerModelsHooks();
-  console.log("REGISTERED HOOKS");
 };
