@@ -9,6 +9,11 @@ const registerModelsHooks = async () => {
     .filter((contentType) => contentType.pluginOptions && contentType.pluginOptions['import-export'] && contentType.pluginOptions['import-export'].stage)
     .map((contentType) => contentType.uid);
 
+  const dontStageModels = Object.values(strapi.contentTypes)
+    .filter((contentType) => contentType.pluginOptions && (!contentType.pluginOptions['import-export'] || !contentType.pluginOptions['import-export'].stage))
+    .filter((contentType) => contentType.uid.startsWith("api::"))
+    .map((contentType) => contentType.uid);
+
   const roles = await strapi
     .service("plugin::users-permissions.role")
     .find();
@@ -46,7 +51,18 @@ const registerModelsHooks = async () => {
   } catch (e) {
   }
 
+  try {
+    const origSotkaConfig = fs.readFileSync("sotka-config.js", "utf8");
+    const sotkaConfig = origSotkaConfig.replace(/dontStageCollections\s*:\s*"[^"]*"/, `dontStageCollections: "${dontStageModels.join(",")}"`);
+    if (origSotkaConfig !== sotkaConfig) {
+      fs.writeFileSync("sotka-config.js", sotkaConfig);
+    }
+  } catch (e) {
+  }
+
   const sotkaConfigObj = require("../../../../sotka-config.js");
+
+
 
   if (sotkaConfigObj.enableChanges) {
     const currentRecords = {};
