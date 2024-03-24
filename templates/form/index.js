@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { FORM_STATE, MyDatePicker, useFormSubmit, useYupValidationResolver } from "/lib/form";
+import { FORM_STATE, MyDatePicker, useFormSubmit, useYupValidationResolver } from "@/lib/form";
 import * as yup from "yup";
 
 const Page = () => {

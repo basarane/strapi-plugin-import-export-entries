@@ -1,5 +1,5 @@
-import { fetchAPI } from "/lib/api";
-import Image from "/components/image";
+import { fetchAPI } from "@/lib/api";
+import Image from "@/components/image";
 
 <%
 
