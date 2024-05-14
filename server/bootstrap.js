@@ -62,7 +62,30 @@ const registerModelsHooks = async () => {
 
   const sotkaConfigObj = require("../../../../sotka-config.js");
 
+  strapi.db.lifecycles.subscribe(async (event) => {
+    const fs = require('fs');
+    const path = require('path');
 
+    const lockFilename = path.join(__dirname, '../../../../', 'strapi-import-lock');
+    if (fs.existsSync(lockFilename))
+      return;
+
+    const changesFileName = path.join(__dirname, '../../../../', 'strapi-changes');
+    const logEvents = ["afterUpdate", "afterCreate", "afterDelete", "afterUpdateMany", "afterCreateMany", "afterDeleteMany"];
+
+
+    if (logEvents.indexOf(event.action) >= 0 && !event.model.uid.startsWith("strapi::") && !event.model.uid.startsWith("admin::") && !event.model.uid.startsWith("plugin::") && !event.params.change_update) {
+      const params = event.params;
+      delete params.populate;
+      fs.appendFileSync(changesFileName, JSON.stringify({
+        uid: event.model.uid,
+        action: event.action.substring(5),
+        params: params,
+      }, null, 4));
+    }
+
+
+  });
 
   if (sotkaConfigObj.enableChanges) {
     const currentRecords = {};
