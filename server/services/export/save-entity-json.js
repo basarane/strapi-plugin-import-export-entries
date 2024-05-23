@@ -24,7 +24,13 @@ const commitEntityJson = async ({ branch }) => {
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
     const res0 = child_process.execSync(`git pull origin ${currentBranch}`, { stdio: 'inherit' });
     const res0b = child_process.execSync(`git submodule update --remote`, { stdio: 'inherit' });
-    const res1 = gitAdd("Entity/*") + gitAdd("Entity.json") + gitAdd("public/uploads") + gitAdd("src/plugins/*") + gitAdd("strapi-scripts");
+    try {
+        const res0c = child_process.execSync(`del /q strapi-changes`, { stdio: 'inherit' });
+        console.log("strapi-changes removed")
+    } catch (e) {
+        console.log("strapi-changes not found")
+    }
+    const res1 = gitAdd("data/*") + gitAdd("Entity/*") + gitAdd("Entity.json") + gitAdd("public/uploads") + gitAdd("src/plugins/*") + gitAdd("strapi-scripts");
     const res2 = child_process.execSync(`git commit -m "Commit from strapi"`, { stdio: 'inherit' });
     let res3, res4, res5, res6, res7;
     const toBranch = branch;
@@ -53,7 +59,7 @@ const commitEntityJson = async ({ branch }) => {
 const loadEntityJsonParams = async ({ }) => {
     var child_process = require('child_process');
     const currentBranch = child_process.execSync('git branch --show-current').toString().trim();
-    const currentDiff = child_process.execSync('git status Entity/ Entity.json public/uploads/ -s').toString().trim();
+    const currentDiff = child_process.execSync('git status data/ Entity/ Entity.json public/uploads/ -s').toString().trim();
     const sotkaConfig = require('../../../../../../sotka-config.js');
     return { success: true, res: { config: { ...sotkaConfig, currentBranch: currentBranch, currentDiff: currentDiff } } };
 }
