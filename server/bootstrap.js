@@ -1,7 +1,10 @@
 'use strict';
 
 const { isArray } = require("lodash");
-
+const util = require("util");
+const path = require('path');
+const { exec } = require('child_process');
+const execPromise = util.promisify(exec);
 
 const registerModelsHooks = async () => {
   const fs = require("fs");
@@ -59,6 +62,27 @@ const registerModelsHooks = async () => {
     }
   } catch (e) {
   }
+
+
+  // const res = await execPromise('npm run strapi ts:generate-types --debug', { cwd: path.join(__dirname, '../../../../') });
+  // console.log("generate typeres", res);
+
+
+  strapi.server.httpServer.on('listening', async () => {
+    try {
+      // if there is a file "../../../../../site/copy-types.js" then run it by node copy-types.js 
+      const siteRoot = path.join(__dirname, '../../../../../', 'site');
+      const copyTypesScript = path.join(siteRoot, 'copy-types.js');
+      console.log("check if copy-types.js exists", copyTypesScript);
+
+      if (fs.existsSync(copyTypesScript)) {
+        console.log("run copy-types.js");
+        await execPromise('node ' + copyTypesScript, { cwd: path.join(siteRoot) });
+      }
+    } catch (e) {
+      console.error('Execution error:', e);
+    }
+  });
 
   const sotkaConfigObj = require("../../../../sotka-config.js");
 
