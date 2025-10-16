@@ -66,7 +66,7 @@ describe('export service', () => {
         [SLUG]: [generateData(SLUG, { id: 1, locale: 'en' }), generateData(SLUG, { locale: 'fr' }), generateData(SLUG, { locale: 'it' })],
       };
 
-      await strapi.entityService.create(SLUG, { data: CONFIG[SLUG][0] });
+      await strapi.documents(SLUG).create({ data: CONFIG[SLUG][0] });
       const createHandler = strapi.plugin('i18n').service('core-api').createCreateLocalizationHandler(getModel(SLUG));
       await createHandler({ id: CONFIG[SLUG][0].id, data: CONFIG[SLUG][1] });
       await createHandler({ id: CONFIG[SLUG][0].id, data: CONFIG[SLUG][2] });
@@ -100,7 +100,7 @@ describe('export service', () => {
         [SLUG]: [generateData(SLUG, { id: 1, component: generateData(SLUGS.COMPONENT_COMPONENT, { id: 1 }) })],
       };
 
-      await Promise.all(CONFIG[SLUG].map((datum) => strapi.entityService.create(SLUG, { data: datum })));
+      await Promise.all(CONFIG[SLUG].map((datum) => strapi.documents(SLUG).create({ data: datum })));
 
       const dataRaw = await getService('export').exportDataV2({ slug: SLUG });
       const { data } = JSON.parse(dataRaw);
@@ -129,7 +129,7 @@ describe('export service', () => {
         [SLUG]: [generateData(SLUG, { id: 1, componentRepeatable: [generateData(SLUGS.COMPONENT_COMPONENT, { id: 1 }), generateData(SLUGS.COMPONENT_COMPONENT, { id: 2 })] })],
       };
 
-      await Promise.all(CONFIG[SLUG].map((datum) => strapi.entityService.create(SLUG, { data: datum })));
+      await Promise.all(CONFIG[SLUG].map((datum) => strapi.documents(SLUG).create({ data: datum })));
 
       const dataRaw = await getService('export').exportDataV2({ slug: SLUG });
       const { data } = JSON.parse(dataRaw);
@@ -181,7 +181,7 @@ describe('export service', () => {
         ],
       };
 
-      await strapi.entityService.create(SLUGS.SINGLE_TYPE, { data: CONFIG[SLUGS.SINGLE_TYPE][0] });
+      await strapi.documents(SLUGS.SINGLE_TYPE).create({ data: CONFIG[SLUGS.SINGLE_TYPE][0] });
       const createHandler = strapi.plugin('i18n').service('core-api').createCreateLocalizationHandler(getModel(SLUGS.SINGLE_TYPE));
       await createHandler({ id: CONFIG[SLUGS.SINGLE_TYPE][0].id, data: CONFIG[SLUGS.SINGLE_TYPE][1] });
       await createHandler({ id: CONFIG[SLUGS.SINGLE_TYPE][0].id, data: CONFIG[SLUGS.SINGLE_TYPE][2] });
@@ -213,7 +213,7 @@ describe('export service', () => {
         [SLUG]: [generateData(SLUG, { id: 1, component: generateData(SLUGS.COMPONENT_COMPONENT, { id: 1 }) })],
       };
 
-      await Promise.all(CONFIG[SLUG].map((datum) => strapi.entityService.create(SLUG, { data: datum })));
+      await Promise.all(CONFIG[SLUG].map((datum) => strapi.documents(SLUG).create({ data: datum })));
 
       const dataRaw = await getService('export').exportDataV2({ slug: SLUG });
       const { data } = JSON.parse(dataRaw);
@@ -240,7 +240,7 @@ describe('export service', () => {
         [SLUG]: [generateData(SLUG, { id: 1, componentRepeatable: [generateData(SLUGS.COMPONENT_COMPONENT, { id: 1 }), generateData(SLUGS.COMPONENT_COMPONENT, { id: 2 })] })],
       };
 
-      await Promise.all(CONFIG[SLUG].map((datum) => strapi.entityService.create(SLUG, { data: datum })));
+      await Promise.all(CONFIG[SLUG].map((datum) => strapi.documents(SLUG).create({ data: datum })));
 
       const dataRaw = await getService('export').exportDataV2({ slug: SLUG });
       const { data } = JSON.parse(dataRaw);
@@ -269,7 +269,7 @@ describe('export service', () => {
       };
 
       for (const slug of Object.keys(CONFIG)) {
-        await Promise.all(CONFIG[slug].map((datum) => strapi.entityService.create(slug, { data: datum })));
+        await Promise.all(CONFIG[slug].map((datum) => strapi.documents(slug).create({ data: datum })));
       }
 
       const dataRaw = await getService('export').exportDataV2({ slug: 'custom:db' });

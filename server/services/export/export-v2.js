@@ -271,7 +271,7 @@ const findEntries = async (slug, deepness, populate, { search, ids }) => {
         },
       });
     }
-    let entries = await strapi.entityService.findMany(slug, queryBuilder.get());
+    let entries = await strapi.documents(slug).findMany(queryBuilder.get());
     if (!Array.isArray(entries)) {
       entries = [entries];
     }

@@ -200,7 +200,7 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
     let entry = await strapi.db.query(slug).findOne({ where });
 
     if (!entry) {
-      await strapi.entityService.create(slug, { data: datum });
+      await strapi.documents(slug).create({ data: datum });
       // await updateEntry(slug, datum.id, datum, { importStage }); // @ersin
     } else {
       await updateEntry(slug, entry.id, datum, { importStage });
@@ -250,9 +250,12 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
 
     if (isDatumInDefaultLocale) {
       if (!entryDefaultLocale) {
-        await strapi.entityService.create(slug, { data: datum });
+        await strapi.documents(slug).create({ data: datum });
       } else {
-        await strapi.entityService.update(slug, entryDefaultLocale.id, { data: omit({ ...datum }, ['id']) });
+        await strapi.documents(slug).update({
+          documentId: "__TODO__",
+          data: omit({ ...datum }, ['id'])
+        });
       }
     } else {
       if (!entryDefaultLocale) {
@@ -265,7 +268,10 @@ const updateOrCreateCollectionType = async (user, slug, datum, { idField, import
         const createHandler = strapi.plugin('i18n').service('core-api').createCreateLocalizationHandler(getModel(slug));
         await createHandler({ id: entryDefaultLocale.id, data: datum });
       } else {
-        await strapi.entityService.update(slug, entry.id, { data: datum });
+        await strapi.documents(slug).update({
+          documentId: "__TODO__",
+          data: datum
+        });
       }
     }
   }
@@ -279,7 +285,7 @@ const updateOrCreateSingleType = async (user, slug, datum, { importStage }) => {
     entry = isArraySafe(entry) ? entry[0] : entry;
 
     if (!entry) {
-      await strapi.entityService.create(slug, { data: datum });
+      await strapi.documents(slug).create({ data: datum });
     } else {
       await updateEntry(slug, entry.id, datum, { importStage });
     }
@@ -294,14 +300,17 @@ const updateOrCreateSingleType = async (user, slug, datum, { importStage }) => {
 
     let entryDefaultLocale = await strapi.db.query(slug).findOne({ where: { locale: defaultLocale } });
     if (!entryDefaultLocale) {
-      entryDefaultLocale = await strapi.entityService.create(slug, { data: { ...datum, locale: defaultLocale } });
+      entryDefaultLocale = await strapi.documents(slug).create({ data: { ...datum, locale: defaultLocale } });
     }
 
     if (isDatumInDefaultLocale) {
       if (!entryDefaultLocale) {
-        await strapi.entityService.create(slug, { data: datum });
+        await strapi.documents(slug).create({ data: datum });
       } else {
-        await strapi.entityService.update(slug, entryDefaultLocale.id, { data: datum });
+        await strapi.documents(slug).update({
+          documentId: "__TODO__",
+          data: datum
+        });
       }
     } else {
       const entryLocale = await strapi.db.query(slug).findOne({ where: { locale: datum.locale } });
@@ -320,7 +329,10 @@ const updateEntry = async (slug, id, datum, { importStage }) => {
 
   if (importStage === 'simpleAttributes') {
     console.log("updateEntrySimple", slug, id, datum);
-    await strapi.entityService.update(slug, id, { data: datum });
+    await strapi.documents(slug).update({
+      documentId: "__TODO__",
+      data: datum
+    });
   } else if (importStage === 'relationAttributes') {
     // if (slug !== "plugin::upload.file") {
     console.log("updateEntryRelation", slug, id, datum);

@@ -41,7 +41,7 @@ describe('import service', () => {
         [SLUG]: [generateData(SLUG, { id: 1 })],
       };
 
-      await Promise.all(CONFIG_CREATE[SLUG].map((datum) => strapi.entityService.create(SLUG, { data: datum })));
+      await Promise.all(CONFIG_CREATE[SLUG].map((datum) => strapi.documents(SLUG).create({ data: datum })));
 
       const CONFIG_UPDATE = {
         [SLUG]: [pick(generateData(SLUG, { id: 1 }), ['id', 'description', 'startDateTime'])],
@@ -74,7 +74,7 @@ describe('import service', () => {
 
       const { failures } = await getService('import').importDataV2(fileContent, { slug: SLUG, user: {}, idField: 'id' });
 
-      const entries = await strapi.entityService.findMany(SLUG, { populate: '*' });
+      const entries = await strapi.documents(SLUG).findMany({ populate: '*' });
 
       expect(failures.length).toBe(0);
       expect(entries.length).toBe(CONFIG[SLUG].length);
@@ -93,7 +93,7 @@ describe('import service', () => {
     it('should update collection type localized', async () => {
       const SLUG = SLUGS.COLLECTION_TYPE;
 
-      await strapi.entityService.create(SLUG, { data: generateData(SLUG, { id: 1, locale: 'en' }) });
+      await strapi.documents(SLUG).create({ data: generateData(SLUG, { id: 1, locale: 'en' }) });
 
       const CONFIG = {
         [SLUG]: [generateData(SLUG, { id: 1, locale: 'en' })],
@@ -103,7 +103,7 @@ describe('import service', () => {
 
       const { failures } = await getService('import').importDataV2(fileContent, { slug: SLUG, user: {}, idField: 'id' });
 
-      const entries = await strapi.entityService.findMany(SLUG, { populate: '*' });
+      const entries = await strapi.documents(SLUG).findMany({ populate: '*' });
 
       expect(failures.length).toBe(0);
       expect(entries.length).toBe(CONFIG[SLUG].length);
@@ -296,7 +296,7 @@ describe('import service', () => {
     it('should update single type', async () => {
       const SLUG = SLUGS.SINGLE_TYPE_SIMPLE;
 
-      await strapi.entityService.create(SLUG, { data: generateData(SLUG, { id: 1 }) });
+      await strapi.documents(SLUG).create({ data: generateData(SLUG, { id: 1 }) });
 
       const CONFIG = {
         [SLUG]: [generateData(SLUG, { id: 1 })],
@@ -341,7 +341,7 @@ describe('import service', () => {
     it('should update single type localized', async () => {
       const SLUG = SLUGS.SINGLE_TYPE;
 
-      await strapi.entityService.create(SLUG, { data: generateData(SLUG, { id: 1 }) });
+      await strapi.documents(SLUG).create({ data: generateData(SLUG, { id: 1 }) });
 
       const CONFIG = {
         [SLUG]: [generateData(SLUG, { id: 1, locale: 'en' })],

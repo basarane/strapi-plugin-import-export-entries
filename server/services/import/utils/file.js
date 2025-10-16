@@ -53,13 +53,15 @@ const findFile = async ({ id, hash, name, url, alternativeText, caption }, user,
   let file = null;
 
   if (!file && id) {
-    file = await strapi.entityService.findOne('plugin::upload.file', id);
+    file = await strapi.documents('plugin::upload.file').findOne({
+      documentId: "__TODO__"
+    });
   }
   if (!file && hash) {
-    [file] = await strapi.entityService.findMany('plugin::upload.file', { filters: { hash }, limit: 1 });
+    [file] = await strapi.documents('plugin::upload.file').findMany({ filters: { hash }, limit: 1 });
   }
   if (!file && name) {
-    [file] = await strapi.entityService.findMany('plugin::upload.file', { filters: { name }, limit: 1 });
+    [file] = await strapi.documents('plugin::upload.file').findMany({ filters: { name }, limit: 1 });
   }
   if (!file && url) {
     const checkResult = isValidFileUrl(url, allowedFileTypes);

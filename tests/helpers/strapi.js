@@ -13,7 +13,7 @@ let instance;
 
 async function setupStrapi() {
   if (!instance) {
-    await Strapi({
+    await Strapi.createStrapi({
       appDir: `${__dirname}/test-app`,
       serveAdminPanel: false,
       autoReload: false,
