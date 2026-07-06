@@ -25,10 +25,16 @@ const commitEntityJson = async ({ branch }) => {
     const res0 = child_process.execSync(`git pull origin ${currentBranch}`, { stdio: 'inherit' });
     const res0b = child_process.execSync(`git submodule update --remote`, { stdio: 'inherit' });
     try {
-        const res0c = child_process.execSync(`del /q strapi-changes`, { stdio: 'inherit' });
-        console.log("strapi-changes removed")
+        const fs = require('fs');
+        const changesPath = 'strapi-changes';
+        if (fs.existsSync(changesPath)) {
+            fs.rmSync(changesPath, { recursive: true, force: true });
+            console.log("strapi-changes removed");
+        } else {
+            console.log("strapi-changes not found");
+        }
     } catch (e) {
-        console.log("strapi-changes not found")
+        console.log("strapi-changes not found");
     }
     const res1 = gitAdd("data/*") + gitAdd("Entity/*") + gitAdd("Entity.json") + gitAdd("public/uploads") + gitAdd("src/plugins/*") + gitAdd("strapi-scripts");
     const res2 = child_process.execSync(`git commit -m "Commit from strapi"`, { stdio: 'inherit' });
